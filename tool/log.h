@@ -78,7 +78,6 @@ void impl_print(bool is_err, const char *fmt, ...) {
                 tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
     }
 
-
     va_list args;
     va_start(args, fmt);
     vfprintf(log_fp, fmt, args);

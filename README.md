@@ -1,6 +1,7 @@
 # ffmk(fuzzy finder minimal kit)
 
 - [ ] check fzf version and is rg avaliable
+- [ ] make the set wimdow option be a function
 
 - preview window
   + [ ] only use the neovim's buffer to preview file (with size limitation)

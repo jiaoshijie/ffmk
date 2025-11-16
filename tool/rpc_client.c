@@ -25,7 +25,7 @@
 #define SEND_MSGID 0x01  // I think this is ok, because each process only send once
 
 #define NVIM_METHOD "nvim_exec_lua"
-#define NVIM_METHOD_CODE "require('ffmk.action').action({ ... })"
+#define NVIM_METHOD_CODE "require('ffmk.rpc').call({ ... })"
 
 #define FFMK_LOG_IMPLEMENTATION
 #define FFMK_LOG_FILE_NAME "tool_rpc_client.log"

@@ -18,10 +18,9 @@
 #include "log.h"
 
 enum FUNC_CODE {
-    FC_INVALID = 0,
-    FC_FILES = 1,
-    FC_GREP = 2,
-    FC_HELPTAGS = 3,
+    FC_FILES = 0,
+    FC_GREP = 1,
+    FC_HELPTAGS = 2,
 };
 
 static const char *program_name = "conv";

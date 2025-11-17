@@ -6,7 +6,8 @@ local script_dir = debug.getinfo(1, "S").source:gsub("^@", ""):match("(.*/)")
 
 --- @param name string
 --- @param prompt string?
-local gen_fzf_opts = function(name, prompt)
+--- @param query string? runtime_ctx.cmd_cfg.query
+local gen_fzf_opts = function(name, prompt, query)
     local opts, found, sub = "", false, nil
 
     -- 1. colors
@@ -47,6 +48,12 @@ local gen_fzf_opts = function(name, prompt)
     if sub then
         opts = fmt("%s %s", opts, fzf_cfg.preview)
     end
+
+    -- 6. query
+    if type(query) == "string" and #query > 0 then
+        opts = fmt("%s --query '%s'", opts, query)
+    end
+
     return opts
 end
 
@@ -54,7 +61,8 @@ end
 --- @param cwd string? runtime_ctx.cmd_cfg.cwd
 --- @param cmd string  runtime_ctx.cmd_cfg.cmd
 --- @param prompt string? runtime_ctx.cmd_cfg.prompt
-_M.run = function(name, cwd, cmd, prompt)
+--- @param query string? runtime_ctx.cmd_cfg.query
+_M.run = function(name, cwd, cmd, prompt, query)
     assert(type(cmd) ~= string, "cmd must be a string")
 
     vim.fn.jobstart(fzf_cfg.bin, {
@@ -69,7 +77,7 @@ _M.run = function(name, cwd, cmd, prompt)
             ["PATH"] = fmt("%s/../../bin:%s", script_dir, vim.env.PATH),
             ["SHELL"] = vim.o.shell,
             ["FZF_DEFAULT_COMMAND"] = cmd,
-            ["FZF_DEFAULT_OPTS"] = gen_fzf_opts(name, prompt),
+            ["FZF_DEFAULT_OPTS"] = gen_fzf_opts(name, prompt, query),
         },
     })
     vim.cmd('startinsert')

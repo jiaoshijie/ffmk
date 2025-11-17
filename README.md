@@ -1,17 +1,21 @@
 # ffmk(fuzzy finder minimal kit)
 
-- [ ] check fzf version and is rg avaliable
-- [ ] make the set wimdow option be a function
-
-- preview window
-  + [ ] only use the neovim's buffer to preview file (with size limitation)
-  + [ ] show percentage and line number not the scrollbar
+- [x] check fzf version and is rg avaliable
+- [x] validate environment in runtime
+- [x] make the set wimdow option be a function
+- [x] disable winbar
+- [x] when preview files set the cursor to the begin of line
+- [x] quit rpc client
+- [x] vim resize event
+- [x] main window quit event
+- [x] when restart the fzf using runtime_ctx.qeury
+- [ ] keymap scroll preview window
 
 Now, it's a simple fzf wrapper for neovim.
 
-- [ ] only telescope.nvim like ui layout (two layout)
-- [ ] fzf-lua like `files`
-- [ ] fzf-lua like `git_files` only provide this command for git, other functionalities i think vim-fugitive plugin doing them better
+- [x] fzf-lua like `files`
+- [x] fzf-lua like `git_files` only provide this command for git, other functionalities i think vim-fugitive plugin doing them better
+- [x] edit file funtion no selected case
 
 - [ ] fzf-lua like `grep`
   + `grep_cword` maybe not provide directly, let the user write a simple function to do this

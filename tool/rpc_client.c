@@ -35,29 +35,25 @@ static const char *program_name = "rpc_client";
 static const char *g_sock_path = NULL;
 
 enum FUNC_CODE {
-    FC_INVALID = 0,
-
-    FC_FILES_ENTER = 1,
-    FC_FILES_PREVIEW = 2,
-
-    FC_GREP_ENTER = 3,
-    FC_GREP_SEND2QF = 4,
-    FC_GREP_SEND2LL = 5,
-    FC_GREP_PREVIEW = 6,
-
-    FC_HELPTAGS_ENTER = 7,
-    FC_HELPTAGS_PREVIEW = 8,
-
+    FC_QUIT             = 0,
+    FC_QUERY            = 1,
+    FC_FILES_ENTER      = 2,
+    FC_FILES_PREVIEW    = 3,
+    FC_GREP_ENTER       = 4,
+    FC_GREP_SEND2QF     = 5,
+    FC_GREP_SEND2LL     = 6,
+    FC_GREP_PREVIEW     = 7,
+    FC_HELPTAGS_ENTER   = 8,
+    FC_HELPTAGS_PREVIEW = 9,
     FC_MAX,
 };
 _Static_assert(FC_MAX < 256, "Whoa! So Many Function Code Here!!!");
 
-struct packet_vec {
+static struct packet_vec {
     uint8_t *buf;
     size_t len;
     size_t cap;
-};
-struct packet_vec g_pv;
+} g_pv;
 
 static void packet_vec_clear() {
     free(g_pv.buf);
@@ -202,7 +198,7 @@ static void send2nvim() {
 //     array type -- args if there is no argument to pass using 0x90
 //       args
 
-static void files(int argc, char **argv, int func_code) {
+static void rpc_request(int argc, char **argv, int func_code) {
     size_t len = 0;
     const char *arg = NULL;
 
@@ -249,10 +245,13 @@ int main(int argc, char **argv) {
 
     atexit(packet_vec_clear);
 
+    log_infof("receive function code: %d", func_code);
     switch (func_code) {
+    case FC_QUIT:
+    case FC_QUERY:
     case FC_FILES_ENTER:
     case FC_FILES_PREVIEW:
-        files(argc, argv, func_code);
+        rpc_request(argc, argv, func_code);
         break;
     default:
         log_errorf("unknow function code %d", func_code);

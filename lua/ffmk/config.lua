@@ -2,20 +2,22 @@ local _M = {}
 local fmt = string.format
 
 _M.conv_fc = {
-    files    = 1,
-    grep     = 2,
-    helptags = 3,
+    files    = 0,
+    grep     = 1,
+    helptags = 2,
 }
 
 _M.rpc_fc = {
-    files_enter      = 1,
-    files_preview    = 2,
-    grep_enter       = 3,
-    grep_send2qf     = 4,
-    grep_send2ll     = 5,
-    grep_preview     = 6,
-    helptags_enter   = 7,
-    helptags_preview = 8,
+    quit             = 0,
+    query            = 1,
+    files_enter      = 2,
+    files_preview    = 3,
+    grep_enter       = 4,
+    grep_send2qf     = 5,
+    grep_send2ll     = 6,
+    grep_preview     = 7,
+    helptags_enter   = 8,
+    helptags_preview = 9,
 }
 
 _M.fzf_cfg = {
@@ -51,6 +53,10 @@ _M.fzf_cfg = {
     },
     bind = {
         "alt-a:toggle-all,alt-g:first,alt-G:last",
+        fmt("esc:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
+        fmt("ctrl-g:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
+        fmt("ctrl-q:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
+        fmt("change:execute-silent(rpc_client %d {q})", _M.rpc_fc.query),
     },
     preview = "--preview-window 'hidden'",
     files = {
@@ -60,8 +66,8 @@ _M.fzf_cfg = {
             ["--tabstop"]  = "1",
         },
         bind = {
-            fmt("enter:execute-silent(rpc_client %d {} {n} {q})", _M.rpc_fc.files_enter),
-            fmt("focus:execute-silent(rpc_client %d {} {n} {q})", _M.rpc_fc.files_preview),
+            fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.files_enter),
+            fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.files_preview),
         },
     },
 }

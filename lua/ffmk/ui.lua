@@ -90,6 +90,27 @@ local gen_title = function(name, cfg)
     return title
 end
 
+--- @param winid number
+--- @param warn_win boolean enabled cursorline or not
+local set_win_opts = function(winid, warn_win)
+    if not warn_win then
+        vim.api.nvim_set_option_value('cursorline', true, { win = winid })
+        vim.api.nvim_set_option_value('cursorlineopt', "both", { win = winid })
+        vim.api.nvim_set_option_value('number', true, { win = winid })
+    end
+
+    vim.api.nvim_set_option_value('relativenumber', false, { win = winid })
+    vim.api.nvim_set_option_value('wrap', false, { win = winid })
+    vim.api.nvim_set_option_value('wrap', false, { win = winid })
+    vim.api.nvim_set_option_value('spell', false, { win = winid })
+    vim.api.nvim_set_option_value('signcolumn', 'no', { win = winid })
+    vim.api.nvim_set_option_value('colorcolumn', '0', { win = winid })
+    vim.api.nvim_set_option_value('foldenable', false, { win = winid })
+    vim.api.nvim_set_option_value('list', false, { win = winid })
+    vim.api.nvim_set_option_value('scrolloff', 0, { win = winid })
+    vim.api.nvim_set_option_value('winbar', "", { win = winid })
+end
+
 --- @param ctx table runtime_ctx
 _M.render = function(ctx)
     local main, preview = gen_win_layout(ctx.ui_cfg)
@@ -129,16 +150,9 @@ _M.render = function(ctx)
                 noautocmd = true,
                 border = preview_border,
             })
-            vim.api.nvim_set_option_value('wrap', false, { win = ctx.preview_winid })
-            vim.api.nvim_set_option_value('cursorline', true, { win = ctx.preview_winid })
-            vim.api.nvim_set_option_value('wrap', false, { win = ctx.preview_winid })
-            vim.api.nvim_set_option_value('spell', false, { win = ctx.preview_winid })
-            vim.api.nvim_set_option_value('signcolumn', 'no', { win = ctx.preview_winid })
-            vim.api.nvim_set_option_value('colorcolumn', '0', { win = ctx.preview_winid })
-            vim.api.nvim_set_option_value('foldenable', false, { win = ctx.preview_winid })
             vim.api.nvim_set_option_value('winblend', 0, { win = ctx.preview_winid })
         else
-            vim.api.nvim_win_set_config(ctx.winid, main)
+            vim.api.nvim_win_set_config(ctx.preview_winid, preview)
         end
     end
 end
@@ -153,7 +167,7 @@ end
 --- @param ctx table runtime_ctx
 --- @param bufnr number
 --- @param text string
-_M.update_preview_warn = function(ctx, bufnr, text)
+local update_preview_warn = function(ctx, bufnr, text)
     if bufnr ~= ctx.preview_bufs['ffmk'] then
         return
     end
@@ -164,15 +178,19 @@ _M.update_preview_warn = function(ctx, bufnr, text)
     nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
     vim.schedule(function()
         vim.hl.range(bufnr, ns, "FFMKWarnMsg", { 0, 0 }, { 0, -1 })
+        set_win_opts(ctx.preview_winid, true)
     end)
 end
 
 --- @param ctx table runtime_ctx
 --- @param bufnr number
---- @param path string
+--- @param preview_ctx table runtime_ctx.preview_ctx
 --- @param loaded_buf boolean
 --- @param syntax boolean
-_M.update_preview = function(ctx, bufnr, path, loaded_buf, syntax)
+local update_preview = function(ctx, bufnr, preview_ctx, loaded_buf, syntax)
+    assert(preview_ctx ~= nil)
+    local path = preview_ctx.path
+
     if bufnr == ctx.preview_bufs['ffmk'] then
         return
     end
@@ -183,6 +201,12 @@ _M.update_preview = function(ctx, bufnr, path, loaded_buf, syntax)
     local title = vim.fn.fnamemodify(path, ':t')
     vim.api.nvim_win_set_config(ctx.preview_winid, { title = fmt(" %s ", title), title_pos = "center" })
     nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
+    if preview_ctx.row then
+        vim.api.nvim_win_set_cursor(ctx.preview_winid, {
+            preview_ctx.row,
+            preview_ctx.col or 0,
+        })
+    end
 
     if not loaded_buf then
         kit.read_file_async(path, vim.schedule_wrap(function(data)
@@ -194,7 +218,7 @@ _M.update_preview = function(ctx, bufnr, path, loaded_buf, syntax)
                 table.remove(lines)
             end
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-            vim.api.nvim_set_option_value('number', true, { win = ctx.preview_winid })
+            set_win_opts(ctx.preview_winid, false)
 
             local ft = nil
             if syntax then ft = vim.filetype.match({ buf = bufnr, filename = path }) end
@@ -204,34 +228,39 @@ _M.update_preview = function(ctx, bufnr, path, loaded_buf, syntax)
                         and vim.api.nvim_buf_is_loaded(bufnr) then
                         pcall(vim.api.nvim_set_option_value, 'filetype', ft, { buf = bufnr })
                     end
-                end, 10)
+                end, 20)
             end
         end))
     else
         vim.schedule(function()
-            vim.api.nvim_set_option_value('number', true, { win = ctx.preview_winid })
+            set_win_opts(ctx.preview_winid, false)
         end)
     end
 end
 
-_M.preview = function(ctx, abs_path)
-    if not abs_path or #abs_path == 0 then
+--- @param ctx table runtime_ctx
+--- @param preview_ctx table runtime_ctx.preview_ctx
+_M.preview = function(ctx, preview_ctx)
+    if not preview_ctx or not preview_ctx.path or #preview_ctx.path == 0 then
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Nothing Selected ")
         return
     end
 
+    local abs_path = preview_ctx.path
+
     if kit.is_binary(abs_path) then
-        _M.update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ")
         return
     end
 
     local st = vim.uv.fs_stat(abs_path)
     if not st then
-        _M.update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Stat Failed ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Stat Failed ")
         return
     end
 
     if st.size > 5 * 1024 * 1024 then  -- 5M
-        _M.update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Big File ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Big File ")
         return
     end
 
@@ -244,7 +273,7 @@ _M.preview = function(ctx, abs_path)
         ctx.preview_bufs[abs_path] = bufnr
     end
 
-    _M.update_preview(ctx, bufnr, abs_path, loaded, st.size < 512 * 1024)  -- 512K
+    update_preview(ctx, bufnr, preview_ctx, loaded, st.size < 512 * 1024)  -- 512K
 end
 
 return _M

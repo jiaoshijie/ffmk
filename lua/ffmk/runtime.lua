@@ -187,6 +187,12 @@ local set_keymaps = function(bufnr)
     vim.keymap.set('n', '<C-[>', function()
         action.quit(_M)
     end, { buffer = bufnr })
+    vim.keymap.set('t', '<C-u>', function()
+        action.preview_scroll_up(ctx)
+    end, { buffer = bufnr })
+    vim.keymap.set('t', '<C-d>', function()
+        action.preview_scroll_down(ctx)
+    end, { buffer = bufnr })
 end
 
 local set_events = function(bufnr)

@@ -2,9 +2,6 @@ local _M = {}
 local rpc_fc = require('ffmk.config').rpc_fc
 local rt = require('ffmk.runtime')
 
--- syntax limit is 512K
--- preview limit is 10M
-
 local rpc_map = {
     [rpc_fc.quit] = rt.rpc_quit,
     [rpc_fc.query] = rt.rpc_query,

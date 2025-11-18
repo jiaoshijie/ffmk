@@ -41,10 +41,9 @@ enum FUNC_CODE {
     FC_FILES_PREVIEW    = 3,
     FC_GREP_ENTER       = 4,
     FC_GREP_SEND2QF     = 5,
-    FC_GREP_SEND2LL     = 6,
-    FC_GREP_PREVIEW     = 7,
-    FC_HELPTAGS_ENTER   = 8,
-    FC_HELPTAGS_PREVIEW = 9,
+    FC_GREP_PREVIEW     = 6,
+    FC_HELPTAGS_ENTER   = 7,
+    FC_HELPTAGS_PREVIEW = 8,
     FC_MAX,
 };
 _Static_assert(FC_MAX < 256, "Whoa! So Many Function Code Here!!!");

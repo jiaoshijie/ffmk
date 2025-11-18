@@ -14,10 +14,9 @@ _M.rpc_fc = {
     files_preview    = 3,
     grep_enter       = 4,
     grep_send2qf     = 5,
-    grep_send2ll     = 6,
-    grep_preview     = 7,
-    helptags_enter   = 8,
-    helptags_preview = 9,
+    grep_preview     = 6,
+    helptags_enter   = 7,
+    helptags_preview = 8,
 }
 
 _M.fzf_cfg = {
@@ -52,10 +51,9 @@ _M.fzf_cfg = {
         ["--tabstop"]        = "4",
     },
     bind = {
+        "ctrl-d:ignore,ctrl-g:ignore,ctrl-q:ignore,ctrl-z:ignore",   -- disable some default keymaps
         "alt-a:toggle-all,alt-g:first,alt-G:last",
         fmt("esc:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
-        fmt("ctrl-g:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
-        fmt("ctrl-q:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
         fmt("change:execute-silent(rpc_client %d {q})", _M.rpc_fc.query),
     },
     preview = "--preview-window 'hidden'",

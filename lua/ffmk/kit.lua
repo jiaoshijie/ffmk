@@ -21,7 +21,7 @@ _M.get_cmd_version = function(cmd, ver_flag)
         or #obj.stderr > 0 then
         return nil, nil, nil
     end
-    local major, minor, patch = obj.stdout:match("(%d+)%.(%d+)%.(%d+)\n")
+    local major, minor, patch = obj.stdout:match("(%d+)%.(%d+)%.(%d+)")
 
     if not major or not minor or not patch then
         return nil, nil, nil
@@ -89,6 +89,8 @@ _M.win_delete = function(win_id, force)
   vim.o.eventignore = save_ei
 end
 
+--- @param path string
+--- @param cb fun(string)
 _M.read_file_async = function(path, cb)
   vim.uv.fs_open(path, "r", tonumber('644', 8), function(err_open, fd)
       if err_open then
@@ -108,6 +110,22 @@ _M.read_file_async = function(path, cb)
           end)
       end)
   end)
+end
+
+--- @param winid number
+--- @param up boolean  -- true: up,false: down
+_M.scroll = function(winid, up)
+    if not winid or not vim.api.nvim_win_is_valid(winid) then
+        return
+    end
+    local cmd = up and "Hgk" or "Lgj"
+
+    pcall(vim.api.nvim_win_call, winid, function()
+        vim.cmd(fmt("norm! %s", cmd))
+        local wi = vim.fn.getwininfo(winid)[1]
+        vim.api.nvim_win_set_cursor(winid, { math.floor((wi.botline + wi.topline) / 2), 0 })
+    end)
+
 end
 
 return _M

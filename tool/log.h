@@ -45,8 +45,9 @@ static void mkdir_p(const char *path) {
         return;
     }
 
-    (void) snprintf(cmd, sizeof(cmd), "mkdir -p '%s'", path);
-    (void) system(cmd);
+    snprintf(cmd, sizeof(cmd), "mkdir -p '%s'", path);
+    int ret = system(cmd);
+    (void) ret;  // discard the compiler warning
 }
 
 static bool log_init() {

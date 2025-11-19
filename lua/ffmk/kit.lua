@@ -125,7 +125,60 @@ _M.scroll = function(winid, up)
         local wi = vim.fn.getwininfo(winid)[1]
         vim.api.nvim_win_set_cursor(winid, { math.floor((wi.botline + wi.topline) / 2), 0 })
     end)
+end
 
+
+--- @param cwd string?
+--- @param path string
+--- @return string
+_M.abs_path = function(cwd, path)
+    -- 1. remove the ansi escape color code, seems the fzf will strip it for me
+    -- path = path:gsub("\27%[[0-9;]*m", "")
+
+    -- 2. get the real path according to the function code
+    if string.sub(path, 1, 1) ~= '/' then
+        path = string.sub(path, 1, 2) == './' and string.sub(path, 3) or path
+        path = vim.fn.expand(cwd or vim.fn.getcwd()) .. '/' .. path
+    end
+
+    return path
+end
+
+--- @param winid number
+--- @param loc Loc
+_M.set_win_cursor_pos = function(winid, loc)
+    if loc.row then
+        vim.api.nvim_win_set_cursor(winid, { loc.row, loc.col or 0, })
+    elseif loc.helptag then
+        -- TODO:
+    else
+        return
+    end
+    vim.api.nvim_win_call(winid, function()
+        vim.cmd("norm! zz")
+    end)
+end
+
+--- @param loc Loc
+_M.edit = function(loc)
+    if not loc.path or #loc.path == 0 then
+        _M.echo_err_msg("No path found")
+        return
+    end
+    vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
+    _M.set_win_cursor_pos(0, loc)
+end
+
+--- @param prefer_winid number?
+_M.goto_winid = function(prefer_winid)
+    if prefer_winid and vim.api.nvim_win_is_valid(prefer_winid) then
+        vim.fn.win_gotoid(prefer_winid)
+    else
+        -- NOTE: As the windows created by this plugin are all floating windows,
+        -- there must be a valid normal window in the grid
+        -- TODO: check `winfixbuf` option
+        vim.fn.win_gotoid(vim.fn.win_getid(1))
+    end
 end
 
 return _M

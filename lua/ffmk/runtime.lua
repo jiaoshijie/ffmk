@@ -6,13 +6,19 @@ local kit = require('ffmk.kit')
 local ff = require('ffmk.fzf')
 local action = require('ffmk.action')
 
+--- @class Loc
+--- @field path string?
+--- @field row number?
+--- @field col number?
+--- @field helptag string?
+
 -- { fzf, rg, fd }
 local rt_env = {}
 
 local ctx = {
     target_winid = nil,
     query = nil,
-    preview_ctx = nil,  -- { path = "", row = 1, col = 0 }
+    loc = nil,  --- @type Loc
 
     name = nil,
     ui_cfg = nil,
@@ -125,7 +131,6 @@ _M.release = function(exit, main, preview)
         ctx.ui_cfg = nil
         ctx.cmd_cfg = nil
         ctx.query = nil
-        ctx.preview_ctx = nil
 
         -- NOTE: defer the deletion of the preview buf list a little bit
         -- then it will not block the ui
@@ -157,6 +162,7 @@ local gen_files_cmd = function(cfg)
 
     local cmd = fmt("%s", cfg.cmd)
 
+    -- options
     cmd = cfg.follow and fmt("%s -L", cmd) or cmd
     cmd = cfg.hidden and fmt("%s --hidden", cmd) or cmd
     cmd = cfg.no_ignore and fmt("%s --no-ignore", cmd) or cmd
@@ -164,6 +170,28 @@ local gen_files_cmd = function(cfg)
     if cfg.filename_first then
         cmd = fmt("%s | conv %d", cmd, default_cfg.conv_fc.files)
     end
+
+    return cmd
+end
+
+--- @param cfg table ctx.cmd_cfg
+--- @return string?
+local gen_grep_cmd = function(cfg)
+    if type(cfg.query) ~= "string" or #cfg.query == 0 then
+        kit.echo_err_msg("`grep` requires a query string")
+        return nil
+    end
+    local cmd = "rg --color=always --heading --line-number --column --max-columns=4096"
+
+    -- options
+    cmd = cfg.smart_case and fmt("%s --smart-case", cmd) or cmd
+    cmd = cfg.fixed_string and fmt("%s -F", cmd) or cmd
+    cmd = cfg.follow and fmt("%s -L", cmd) or cmd
+    cmd = cfg.hidden and fmt("%s --hidden", cmd) or cmd
+    cmd = cfg.no_ignore and fmt("%s --no-ignore", cmd) or cmd
+
+    -- TODO: need to escape the '
+    cmd = fmt([[%s -e '%s' | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
 
     return cmd
 end
@@ -214,8 +242,7 @@ local set_events = function(bufnr)
     })
 end
 
-rt_func_map.files = function()
-    -- 1. create bufers
+local prepare_buffers = function()
     if not ctx.bufnr or not vim.api.nvim_buf_is_valid(ctx.bufnr) then
         ctx.bufnr = vim.api.nvim_create_buf(false, true)
         set_keymaps(ctx.bufnr)
@@ -226,44 +253,56 @@ rt_func_map.files = function()
         or not vim.api.nvim_buf_is_valid(ctx.preview_bufs["ffmk"]) then
         ctx.preview_bufs["ffmk"] = vim.api.nvim_create_buf(false, true)
     end
+end
+
+rt_func_map.files = function()
+    -- 1. create bufers
+    prepare_buffers()
     -- 2. create ui
     ui.render(ctx)
     -- 3. run fuzzy finder
     ff.run(ctx.name, ctx.cmd_cfg.cwd, gen_files_cmd(ctx.cmd_cfg), ctx.cmd_cfg.prompt, ctx.query)
 end
 
+rt_func_map.grep = function()
+    local cmd = gen_grep_cmd(ctx.cmd_cfg)
+    if not cmd then return end
+    -- 1. create bufers
+    prepare_buffers()
+    -- 2. create ui
+    ui.render(ctx)
+    -- 3. run fuzzy finder
+    ff.run(ctx.name, ctx.cmd_cfg.cwd, cmd, ctx.cmd_cfg.prompt, ctx.query)
+end
+
 ---------------------------------- rpc ---------------------------------------
 
 --- @param fc number
---- @param path string
---- @return string
-local gen_path_from_fc = function(fc, path)
+--- @param arg string
+--- @return Loc
+local get_loc_from_fc = function(fc, arg)
+    local path, row, col, helptag
+
     if fc == default_cfg.rpc_fc.files_enter
         or fc == default_cfg.rpc_fc.files_preview then
         path = ctx.cmd_cfg.filename_first
-                and path:gsub("([^\t]+)\t(.+)", "%2/%1") or path
+                and arg:gsub("([^\t]+)\t(.+)", "%2/%1") or arg
+    elseif fc == default_cfg.rpc_fc.grep_enter
+        or fc == default_cfg.rpc_fc.grep_preview then
+        local b, e = string.find(arg, "\28")
+        path = string.sub(arg, 1, b - 1)
+        row, col, _ = string.match(string.sub(arg, e + 1), ":(%d+):(%d+):(.+)")
     else
         assert(nil, "unreachable!")
     end
 
-    return path
-end
-
---- @param fc number
---- @param path string
---- @return string
-local gen_abs_path = function(fc, path)
-    -- 1. remove the ansi escape color code, seems the fzf will strip it for me
-    -- path = path:gsub("\27%[[0-9;]*m", "")
-
-    -- 2. get the real path according to the function code
-    path = gen_path_from_fc(fc, path)
-    if string.sub(path, 1, 1) ~= '/' then
-        path = string.sub(path, 1, 2) == './' and string.sub(path, 3) or path
-        path = vim.fn.expand(ctx.cmd_cfg.cwd or vim.fn.getcwd()) .. '/' .. path
-    end
-
-    return path
+    -- return path, row and tonumber(row), col and tonumber(col) - 1
+    return {
+        path = kit.abs_path(ctx.cmd_cfg.cwd, path),
+        row = row and tonumber(row),
+        col = col and tonumber(col) - 1,
+        helptag = helptag,
+    }
 end
 
 --- @param fc number
@@ -283,25 +322,31 @@ end
 --- @param fc number
 --- @param args table
 _M.rpc_edit_or_send2qf = function(fc, args)
-    vim.fn.win_gotoid(ctx.target_winid)
+    kit.goto_winid(ctx.target_winid)
     local selected = table.remove(args, #args)
-    if #selected ~= 0 and #args == 1 then
-        vim.cmd('edit ' .. vim.fn.fnameescape(gen_abs_path(fc, args[1])))
+    if #selected == 0 then
+        action.quit(_M)
+        return
+    end
+
+    if #args == 1 then
+        kit.edit(get_loc_from_fc(fc, args[1]))
+    elseif #args > 1 then
+        -- TODO: send to quickfix list
     end
     action.quit(_M)
 end
 
-_M.rpc_files_preview = function(fc, args)
+_M.rpc_preview = function(fc, args)
     local selected = table.remove(args, #args)
     if #selected == 0 then
-        ctx.preview_ctx = nil
+        ctx.loc = nil
     else
-        local abs_path = gen_abs_path(fc, args[1])
-        ctx.preview_ctx = { path = abs_path }
+        ctx.loc = get_loc_from_fc(fc, args[1])
     end
 
     if ctx.ui_cfg.preview then
-        ui.preview(ctx, ctx.preview_ctx)
+        ui.preview(ctx, ctx.loc)
     end
 end
 

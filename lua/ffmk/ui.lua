@@ -87,6 +87,14 @@ local gen_title = function(name, cfg)
         table.insert(title, { " f ", "FFMKTitleFlags" })
     end
 
+    if cfg.smart_case then
+        table.insert(title, { " s ", "FFMKTitleFlags" })
+    end
+
+    if cfg.fixed_string then
+        table.insert(title, { " F ", "FFMKTitleFlags" })
+    end
+
     return title
 end
 
@@ -184,32 +192,27 @@ end
 
 --- @param ctx table runtime_ctx
 --- @param bufnr number
---- @param preview_ctx table runtime_ctx.preview_ctx
+--- @param loc Loc
 --- @param loaded_buf boolean
 --- @param syntax boolean
-local update_preview = function(ctx, bufnr, preview_ctx, loaded_buf, syntax)
-    assert(preview_ctx ~= nil)
-    local path = preview_ctx.path
-
+local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
+    assert(loc ~= nil and loc.path ~= nil)
     if bufnr == ctx.preview_bufs['ffmk'] then
         return
     end
 
     local curbuf = vim.api.nvim_win_get_buf(ctx.preview_winid)
-    if curbuf == bufnr then return end
-
-    local title = vim.fn.fnamemodify(path, ':t')
-    vim.api.nvim_win_set_config(ctx.preview_winid, { title = fmt(" %s ", title), title_pos = "center" })
-    nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
-    if preview_ctx.row then
-        vim.api.nvim_win_set_cursor(ctx.preview_winid, {
-            preview_ctx.row,
-            preview_ctx.col or 0,
-        })
+    if curbuf == bufnr then
+        kit.set_win_cursor_pos(ctx.preview_winid, loc)
+        return
     end
 
+    local filename = vim.fn.fnamemodify(loc.path, ':t')
+    vim.api.nvim_win_set_config(ctx.preview_winid, { title = fmt(" %s ", filename), title_pos = "center" })
+    nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
+
     if not loaded_buf then
-        kit.read_file_async(path, vim.schedule_wrap(function(data)
+        kit.read_file_async(loc.path, vim.schedule_wrap(function(data)
             local lines = vim.split(data, "[\r]?\n")
 
             -- if file ends in new line, don't write an empty string as the last
@@ -219,9 +222,11 @@ local update_preview = function(ctx, bufnr, preview_ctx, loaded_buf, syntax)
             end
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
             set_win_opts(ctx.preview_winid, false)
+            kit.set_win_cursor_pos(ctx.preview_winid, loc)
+
 
             local ft = nil
-            if syntax then ft = vim.filetype.match({ buf = bufnr, filename = path }) end
+            if syntax then ft = vim.filetype.match({ buf = bufnr, filename = filename }) end
             if ft then
                 vim.defer_fn(function()
                     if vim.api.nvim_buf_is_valid(bufnr)
@@ -235,25 +240,24 @@ local update_preview = function(ctx, bufnr, preview_ctx, loaded_buf, syntax)
         vim.schedule(function()
             set_win_opts(ctx.preview_winid, false)
         end)
+        kit.set_win_cursor_pos(ctx.preview_winid, loc)
     end
 end
 
 --- @param ctx table runtime_ctx
---- @param preview_ctx table runtime_ctx.preview_ctx
-_M.preview = function(ctx, preview_ctx)
-    if not preview_ctx or not preview_ctx.path or #preview_ctx.path == 0 then
+--- @param loc Loc?
+_M.preview = function(ctx, loc)
+    if not loc or not loc.path or #loc.path == 0 then
         update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Nothing Selected ")
         return
     end
 
-    local abs_path = preview_ctx.path
-
-    if kit.is_binary(abs_path) then
+    if kit.is_binary(loc.path) then
         update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ")
         return
     end
 
-    local st = vim.uv.fs_stat(abs_path)
+    local st = vim.uv.fs_stat(loc.path)
     if not st then
         update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Stat Failed ")
         return
@@ -264,16 +268,16 @@ _M.preview = function(ctx, preview_ctx)
         return
     end
 
-    local bufnr, loaded = vim.fn.bufnr(abs_path), true
-    if bufnr == -1 then bufnr = ctx.preview_bufs[abs_path] end
+    local bufnr, loaded = vim.fn.bufnr(loc.path), true
+    if bufnr == -1 then bufnr = ctx.preview_bufs[loc.path] end
 
     if not bufnr then
         loaded = false
         bufnr = vim.api.nvim_create_buf(false, true)
-        ctx.preview_bufs[abs_path] = bufnr
+        ctx.preview_bufs[loc.path] = bufnr
     end
 
-    update_preview(ctx, bufnr, preview_ctx, loaded, st.size < 512 * 1024)  -- 512K
+    update_preview(ctx, bufnr, loc, loaded, st.size < 512 * 1024)  -- 512K
 end
 
 return _M

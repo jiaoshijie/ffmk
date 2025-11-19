@@ -7,4 +7,10 @@ _M.files = function(cfg)
     rt.run()
 end
 
+--- @param cfg table { ui = {}, cmd = {} }
+_M.grep = function(cfg)
+    if not rt.setup("grep", cfg) then return end
+    rt.run()
+end
+
 return _M

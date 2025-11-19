@@ -21,8 +21,9 @@ Now, it's a simple fzf wrapper for neovim.
 - [x] edit file funtion no selected case
 - [x] fzf-lua like `files`
 - [x] fzf-lua like `git_files` only provide this command for git, other functionalities i think vim-fugitive plugin doing them better
-- [ ] fzf-lua like `grep`
-  + `grep_cword` maybe not provide directly, let the user write a simple function to do this
+- [x] fzf-lua like `grep`
+  + [ ] put a highlighted cursor to the grep preview window
+  + [ ] grep header to let the user know what string is search for `fzf --header`
 - [ ] fzf-lua like `helptags` this command is very useful actually
 
 ### low priority
@@ -37,4 +38,3 @@ Now, it's a simple fzf wrapper for neovim.
 
 - [ ] `undotree` and `onlysearch` should not open when in command line window
 - [ ] `undotree` make the cursor always in the middle of the undotree window
-- [ ] `onlysearch` --max-columns=256

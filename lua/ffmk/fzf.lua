@@ -71,8 +71,8 @@ _M.run = function(name, cwd, cmd, prompt, query)
         clear_env = true,
         env = {
             -- used by tool (conv, rpc_client)
-            ["FFMK_LOG_DIR"] = vim.fn.stdpath("log") .. "/ffmk",
-            ["FFMK_RPC_UNIX_SOCKET"] = vim.v.servername,
+            ["FFMK_LOG_DIR"] = vim.fn.stdpath("log") .. "/ffmk",  -- log.h
+            ["FFMK_RPC_UNIX_SOCKET"] = vim.v.servername,  -- rpc_client.c
 
             ["PATH"] = fmt("%s/../../bin:%s", script_dir, vim.env.PATH),
             ["SHELL"] = vim.o.shell,

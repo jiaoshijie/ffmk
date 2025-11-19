@@ -29,8 +29,8 @@ _M.fzf_cfg = {
         ["fg+"]   = "#fbf1c7",
         gutter    = nil,
         header    = "#928374",
-        hl        = "#fabd2f",
-        ["hl+"]   = "#fabd2f",
+        hl        = "reverse:-1",
+        ["hl+"]   = "reverse:-1",
         info      = "#504945",
         marker    = "#fb4934",
         pointer   = "#fabd2f",
@@ -68,6 +68,17 @@ _M.fzf_cfg = {
             fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.files_preview),
         },
     },
+    grep = {
+        opt = {
+            ["--multi"] = true,
+            -- ["--header"]
+        },
+        bind = {
+            fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_enter),
+            fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.grep_send2qf),
+            fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_preview),
+        },
+    },
 }
 
 _M.ui_cfg = {
@@ -80,13 +91,25 @@ _M.ui_cfg = {
 
 _M.cmd_cfg = {
     files = {
+        prompt = "Files❯ ",
         cmd = nil,
         cwd = nil,
+        filename_first = true,
+        -- options
         follow = false,
         hidden = false,
         no_ignore = false,
-        filename_first = true,
-        prompt = "Files❯ "
+    },
+    grep = {
+        prompt = "Grep❯ ",
+        query = nil,
+        cwd = nil,
+        -- options
+        follow = false,  -- maybe need --no-messages
+        hidden = false,
+        no_ignore = false,
+        smart_case = true,
+        fixed_string = true,
     },
 }
 

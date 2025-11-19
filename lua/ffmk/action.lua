@@ -36,7 +36,7 @@ _M.toggle_preview = function(ctx, rt)
         rt.release(false, false, true)
         require("ffmk.ui").render(ctx)
         if ctx.ui_cfg.preview then
-            require("ffmk.ui").preview(ctx, ctx.preview_ctx)
+            require("ffmk.ui").preview(ctx, ctx.loc)
         end
     end)
 end

@@ -2,6 +2,9 @@ local _M = {}
 local fmt = string.format
 local kit = require('ffmk.kit')
 
+-- TreeSitter Injection: https://github.com/ibhagwan/fzf-lua/issues/1485
+-- Seems very cool, maybe add it later
+
 local main_border = {
     { "╭", "FFMKBorder" },
     { "─", "FFMKBorder" },

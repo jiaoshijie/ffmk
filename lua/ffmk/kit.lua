@@ -45,7 +45,7 @@ local lua_is_binary = function(path)
         return true
     end
 
-    -- TODO: more robust
+    -- TODO(is_binary): more robust
 
     return false
 end
@@ -94,7 +94,7 @@ end
 _M.read_file_async = function(path, cb)
   vim.uv.fs_open(path, "r", tonumber('644', 8), function(err_open, fd)
       if err_open then
-          -- TODO: log
+          _M.echo_err_msg(fmt("Open `%s` failed: %s", path, err_open))
           return
       end
       vim.uv.fs_fstat(fd, function(err_fstat, stat)
@@ -150,7 +150,7 @@ _M.set_win_cursor_pos = function(winid, loc)
     if loc.row then
         vim.api.nvim_win_set_cursor(winid, { loc.row, loc.col or 0, })
     elseif loc.helptag then
-        -- TODO:
+        -- TODO(helptag):
     else
         return
     end
@@ -202,7 +202,7 @@ _M.goto_winid = function(prefer_winid)
     else
         -- NOTE: As the windows created by this plugin are all floating windows,
         -- there must be a valid normal window in the grid
-        -- TODO: check `winfixbuf` option
+        -- TODO(goto_winid): check `winfixbuf` option
         vim.fn.win_gotoid(vim.fn.win_getid(1))
     end
 end

@@ -205,8 +205,8 @@ local gen_grep_cmd = function(cfg)
         cmd = fmt("%s %s", cmd, table.concat(cfg.extra_options, ' '))
     end
 
-    -- TODO: need to escape the '
-    cmd = fmt([[%s '%s' | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
+    cfg.query = vim.fn.shellescape(cfg.query, false)
+    cmd = fmt([[%s %s | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
 
     return cmd
 end

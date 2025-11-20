@@ -27,6 +27,7 @@ Now, it's a simple fzf wrapper for neovim.
   + [x] support match word option
   + [x] maybe support extra flags
   + [x] quickfix list
+  + [x] escape the single quote for shell cmd
 - [ ] fzf-lua like `helptags` this command is very useful actually
 - [ ] add used highlight group
 
@@ -42,3 +43,4 @@ Now, it's a simple fzf wrapper for neovim.
 
 - [ ] `undotree` and `onlysearch` should not open when in command line window
 - [ ] `undotree` make the cursor always in the middle of the undotree window
+- [ ] `onlysearch` remove the Search virtual text from the ui

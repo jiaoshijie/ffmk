@@ -52,7 +52,7 @@ _M.fzf_cfg = {
     },
     bind = {
         "ctrl-d:ignore,ctrl-g:ignore,ctrl-q:ignore,ctrl-z:ignore",   -- disable some default keymaps
-        "alt-a:toggle-all,alt-g:first,alt-G:last",
+        "alt-a:toggle-all,alt-g:first,alt-G:last,ctrl-l:clear-screen+clear-multi",
         fmt("esc:execute-silent(rpc_client %d)", _M.rpc_fc.quit),
         fmt("change:execute-silent(rpc_client %d {q})", _M.rpc_fc.query),
     },

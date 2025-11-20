@@ -58,12 +58,13 @@ local gen_fzf_opts = function(ctx)
 
     -- 6. query
     if type(ctx.query) == "string" and #ctx.query > 0 then
-        opts = fmt("%s --query '%s'", opts, ctx.query)
+        opts = fmt("%s --query %s", opts, vim.fn.shellescape(ctx.query, false))
     end
 
     -- 7. header
+    -- NOTE: the --header=%s must not be surrounded by single quotes
     if type(ctx.search) == "string" and #ctx.search > 0 then
-        opts = fmt("%s --header-border=rounded --header-label='%s' --header='%s'",
+        opts = fmt("%s --header-border=rounded --header-label='%s' --header=%s",
                     opts, ctx.search_title, ctx.search)
     end
 

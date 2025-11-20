@@ -12,6 +12,12 @@ local action = require('ffmk.action')
 --- @field col number?
 --- @field helptag string?
 
+--- @class QfLoc
+--- @field filename string
+--- @field lnum number
+--- @field col number?
+--- @field text string
+
 -- { fzf, rg, fd }
 local rt_env = {}
 
@@ -113,6 +119,7 @@ _M.run = function()
 end
 
 _M.release = function(exit, main, preview)
+    kit.clear_highlighted_cursor()
     if main then
         kit.win_delete(ctx.winid, true)
         kit.buf_delete(ctx.bufnr)
@@ -183,15 +190,23 @@ local gen_grep_cmd = function(cfg)
     end
     local cmd = "rg --color=always --heading --line-number --column --max-columns=4096"
 
-    -- options
-    cmd = cfg.smart_case and fmt("%s --smart-case", cmd) or cmd
-    cmd = cfg.fixed_string and fmt("%s -F", cmd) or cmd
+    -- commen options
     cmd = cfg.follow and fmt("%s -L", cmd) or cmd
     cmd = cfg.hidden and fmt("%s --hidden", cmd) or cmd
     cmd = cfg.no_ignore and fmt("%s --no-ignore", cmd) or cmd
 
+    -- options
+    cmd = cfg.smart_case and fmt("%s --smart-case", cmd) or cmd
+    cmd = cfg.fixed_string and fmt("%s -F", cmd) or cmd
+    cmd = cfg.whole_word and fmt("%s -w", cmd) or cmd
+
+    -- extra options
+    if type(cfg.extra_options) == "table" and #cfg.extra_options > 0 then
+        cmd = fmt("%s %s", cmd, table.concat(cfg.extra_options, ' '))
+    end
+
     -- TODO: need to escape the '
-    cmd = fmt([[%s -e '%s' | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
+    cmd = fmt([[%s '%s' | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
 
     return cmd
 end
@@ -232,7 +247,7 @@ local set_events = function(bufnr)
             ui.render(ctx)
         end
     })
-    -- TODO: maybe using BufDelete, BufWipeout, but WinClosed works fine
+    -- NOTE: maybe using BufDelete, BufWipeout, but WinClosed works fine
     vim.api.nvim_create_autocmd("WinClosed", {
         group = group,
         buffer = bufnr,
@@ -261,7 +276,13 @@ rt_func_map.files = function()
     -- 2. create ui
     ui.render(ctx)
     -- 3. run fuzzy finder
-    ff.run(ctx.name, ctx.cmd_cfg.cwd, gen_files_cmd(ctx.cmd_cfg), ctx.cmd_cfg.prompt, ctx.query)
+    ff.run({
+        name = ctx.name,
+        cmd = gen_files_cmd(ctx.cmd_cfg),
+        cwd = ctx.cmd_cfg.cwd,
+        prompt = ctx.cmd_cfg.prompt,
+        query = ctx.query,
+    })
 end
 
 rt_func_map.grep = function()
@@ -272,7 +293,15 @@ rt_func_map.grep = function()
     -- 2. create ui
     ui.render(ctx)
     -- 3. run fuzzy finder
-    ff.run(ctx.name, ctx.cmd_cfg.cwd, cmd, ctx.cmd_cfg.prompt, ctx.query)
+    ff.run({
+        name = ctx.name,
+        cmd = cmd,
+        cwd = ctx.cmd_cfg.cwd,
+        prompt = ctx.cmd_cfg.prompt,
+        query = ctx.query,
+        search = ctx.cmd_cfg.query,
+        search_title = ui.gen_grep_title(ctx.cmd_cfg),
+    })
 end
 
 ---------------------------------- rpc ---------------------------------------
@@ -288,6 +317,7 @@ local get_loc_from_fc = function(fc, arg)
         path = ctx.cmd_cfg.filename_first
                 and arg:gsub("([^\t]+)\t(.+)", "%2/%1") or arg
     elseif fc == default_cfg.rpc_fc.grep_enter
+        or fc == default_cfg.rpc_fc.grep_send2qf
         or fc == default_cfg.rpc_fc.grep_preview then
         local b, e = string.find(arg, "\28")
         path = string.sub(arg, 1, b - 1)
@@ -296,13 +326,36 @@ local get_loc_from_fc = function(fc, arg)
         assert(nil, "unreachable!")
     end
 
-    -- return path, row and tonumber(row), col and tonumber(col) - 1
     return {
         path = kit.abs_path(ctx.cmd_cfg.cwd, path),
         row = row and tonumber(row),
         col = col and tonumber(col) - 1,
         helptag = helptag,
     }
+end
+
+--- @param fc number
+--- @param arg table
+--- @return QfLoc[]
+local get_qfloc_from_fc = function(fc, arg)
+    local qflist = {}
+    local filename, lnum, col, text
+    if fc == default_cfg.rpc_fc.grep_send2qf then
+        for _, val in ipairs(arg) do
+            local b, e = string.find(val, "\28")
+            filename = string.sub(val, 1, b - 1)
+            lnum, col, text = string.match(string.sub(val, e + 1), ":(%d+):(%d+):(.+)")
+            table.insert(qflist, {
+                filename = kit.abs_path(ctx.cmd_cfg.cwd, filename),
+                lnum = lnum,
+                col = col,
+                text = text,
+            })
+        end
+    else
+        assert(nil, "unreachable!")
+    end
+    return qflist
 end
 
 --- @param fc number
@@ -332,7 +385,8 @@ _M.rpc_edit_or_send2qf = function(fc, args)
     if #args == 1 then
         kit.edit(get_loc_from_fc(fc, args[1]))
     elseif #args > 1 then
-        -- TODO: send to quickfix list
+        vim.fn.setqflist(get_qfloc_from_fc(fc, args), 'r')
+        vim.cmd('copen | cfirst')
     end
     action.quit(_M)
 end

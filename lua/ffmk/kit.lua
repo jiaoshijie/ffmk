@@ -159,6 +159,32 @@ _M.set_win_cursor_pos = function(winid, loc)
     end)
 end
 
+local g_last_bufnr = nil
+--- @param bufnr number
+--- @param loc Loc
+_M.highlight_cursor = function(bufnr, loc)
+    local ns = vim.api.nvim_create_namespace("ffmk_ui_preview_cursor_ns")
+    _M.clear_highlighted_cursor()
+    g_last_bufnr = bufnr
+    if loc.row and loc.col then
+        vim.hl.range(bufnr, ns, "FFMKPreviewCursor", { loc.row - 1, loc.col },
+                        { loc.row - 1, loc.col + 1 })
+    elseif loc.helptag then
+    else
+        return
+    end
+end
+_M.clear_highlighted_cursor = function(ns)
+    if not ns then
+        ns = vim.api.nvim_create_namespace("ffmk_ui_preview_cursor_ns")
+    end
+
+    if g_last_bufnr and vim.api.nvim_buf_is_valid(g_last_bufnr)
+        and vim.api.nvim_buf_is_loaded(g_last_bufnr) then
+        vim.api.nvim_buf_clear_namespace(g_last_bufnr, ns, 0, -1)
+    end
+end
+
 --- @param loc Loc
 _M.edit = function(loc)
     if not loc.path or #loc.path == 0 then

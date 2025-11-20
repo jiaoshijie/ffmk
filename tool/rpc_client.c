@@ -46,7 +46,7 @@ enum FUNC_CODE {
     FC_HELPTAGS_PREVIEW = 8,
     FC_MAX,
 };
-_Static_assert(FC_MAX < 256, "Whoa! So Many Function Code Here!!!");
+_Static_assert(FC_MAX < 0x80, "Whoa! So Many Function Code Here!!!");  // msgpack `positive fixint` range
 
 static struct packet_vec {
     uint8_t *buf;

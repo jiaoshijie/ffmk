@@ -4,10 +4,17 @@ local fmt = string.format
 
 local script_dir = debug.getinfo(1, "S").source:gsub("^@", ""):match("(.*/)")
 
---- @param name string
---- @param prompt string?
---- @param query string? runtime_ctx.cmd_cfg.query
-local gen_fzf_opts = function(name, prompt, query)
+--- @class FzfCtx
+--- @field name string      runtime_ctx.name
+--- @field cmd string       runtime_ctx.cmd_cfg.cmd
+--- @field cwd string?      runtime_ctx.cmd_cfg.cwd
+--- @field prompt string?   runtime_ctx.cmd_cfg.prompt
+--- @field query string?    runtime_ctx.cmd_cfg.query
+--- @field search string?   runtime_ctx.cmd_cfg.query
+--- @field search_title string?   ui.gen_grep_title
+
+--- @param ctx FzfCtx
+local gen_fzf_opts = function(ctx)
     local opts, found, sub = "", false, nil
 
     -- 1. colors
@@ -22,12 +29,12 @@ local gen_fzf_opts = function(name, prompt, query)
     end
 
     -- 2. prompt
-    if type(prompt) == "string" and #prompt > 0 then
-        opts = fmt("%s --prompt '%s'", opts, prompt)
+    if type(ctx.prompt) == "string" and #ctx.prompt > 0 then
+        opts = fmt("%s --prompt '%s'", opts, ctx.prompt)
     end
 
     -- 3. flags
-    sub = fzf_cfg[name] and fzf_cfg[name].opt or {}
+    sub = fzf_cfg[ctx.name] and fzf_cfg[ctx.name].opt or {}
     for key, val in pairs(vim.tbl_extend("force", fzf_cfg.opt, sub)) do
         if type(val) == "string" then
             opts = fmt("%s %s '%s'", opts, key, val)
@@ -37,36 +44,38 @@ local gen_fzf_opts = function(name, prompt, query)
     end
 
     -- 4. bindings
-    sub = fzf_cfg[name] and fzf_cfg[name].bind or {}
+    sub = fzf_cfg[ctx.name] and fzf_cfg[ctx.name].bind or {}
     for _, val in ipairs(vim.list_extend(fzf_cfg.bind, sub)) do
         opts = fmt("%s --bind '%s'", opts, val)
     end
 
     -- 5. preview
     opts = fmt("%s %s", opts, fzf_cfg.preview)
-    sub = fzf_cfg[name] and fzf_cfg[name].preview
+    sub = fzf_cfg[ctx.name] and fzf_cfg[ctx.name].preview
     if sub then
         opts = fmt("%s %s", opts, fzf_cfg.preview)
     end
 
     -- 6. query
-    if type(query) == "string" and #query > 0 then
-        opts = fmt("%s --query '%s'", opts, query)
+    if type(ctx.query) == "string" and #ctx.query > 0 then
+        opts = fmt("%s --query '%s'", opts, ctx.query)
+    end
+
+    -- 7. header
+    if type(ctx.search) == "string" and #ctx.search > 0 then
+        opts = fmt("%s --header-border=rounded --header-label='%s' --header='%s'",
+                    opts, ctx.search_title, ctx.search)
     end
 
     return opts
 end
 
---- @param name string runtime_ctx.name
---- @param cwd string? runtime_ctx.cmd_cfg.cwd
---- @param cmd string  runtime_ctx.cmd_cfg.cmd
---- @param prompt string? runtime_ctx.cmd_cfg.prompt
---- @param query string? runtime_ctx.cmd_cfg.query
-_M.run = function(name, cwd, cmd, prompt, query)
-    assert(type(cmd) ~= string, "cmd must be a string")
+--- @param ctx FzfCtx
+_M.run = function(ctx)
+    assert(type(ctx.cmd) ~= string, "cmd must be a string")
 
     vim.fn.jobstart(fzf_cfg.bin, {
-        cwd = vim.fn.expand(cwd or vim.fn.getcwd()),
+        cwd = vim.fn.expand(ctx.cwd or vim.fn.getcwd()),
         term = true,
         clear_env = true,
         env = {
@@ -76,8 +85,8 @@ _M.run = function(name, cwd, cmd, prompt, query)
 
             ["PATH"] = fmt("%s/../../bin:%s", script_dir, vim.env.PATH),
             ["SHELL"] = vim.o.shell,
-            ["FZF_DEFAULT_COMMAND"] = cmd,
-            ["FZF_DEFAULT_OPTS"] = gen_fzf_opts(name, prompt, query),
+            ["FZF_DEFAULT_COMMAND"] = ctx.cmd,
+            ["FZF_DEFAULT_OPTS"] = gen_fzf_opts(ctx),
         },
     })
     vim.cmd('startinsert')

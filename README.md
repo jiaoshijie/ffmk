@@ -22,9 +22,13 @@ Now, it's a simple fzf wrapper for neovim.
 - [x] fzf-lua like `files`
 - [x] fzf-lua like `git_files` only provide this command for git, other functionalities i think vim-fugitive plugin doing them better
 - [x] fzf-lua like `grep`
-  + [ ] put a highlighted cursor to the grep preview window
-  + [ ] grep header to let the user know what string is search for `fzf --header`
+  + [x] put a highlighted cursor to the grep preview window
+  + [x] grep header to let the user know what string is search for `fzf --header`
+  + [x] support match word option
+  + [x] maybe support extra flags
+  + [x] quickfix list
 - [ ] fzf-lua like `helptags` this command is very useful actually
+- [ ] add used highlight group
 
 ### low priority
 

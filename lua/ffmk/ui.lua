@@ -87,15 +87,19 @@ local gen_title = function(name, cfg)
         table.insert(title, { " f ", "FFMKTitleFlags" })
     end
 
-    if cfg.smart_case then
-        table.insert(title, { " s ", "FFMKTitleFlags" })
-    end
-
-    if cfg.fixed_string then
-        table.insert(title, { " F ", "FFMKTitleFlags" })
-    end
-
     return title
+end
+
+--- @param cfg table runtime_ctx.cmd_cfg  grep
+--- @return string
+_M.gen_grep_title = function(cfg)
+    local flag = ""
+
+    flag = cfg.smart_case and flag .. 'S' or flag
+    flag = cfg.fixed_string and flag .. 'F' or flag
+    flag = cfg.whole_word and flag .. 'w' or flag
+
+    return #flag > 0 and fmt("Pattern(%s)", flag) or "Pattern"
 end
 
 --- @param winid number
@@ -184,8 +188,8 @@ local update_preview_warn = function(ctx, bufnr, text)
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { text })
     vim.api.nvim_win_set_config(ctx.preview_winid, { title = "" })
     nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
+    vim.hl.range(bufnr, ns, "FFMKWarnMsg", { 0, 0 }, { 0, -1 })
     vim.schedule(function()
-        vim.hl.range(bufnr, ns, "FFMKWarnMsg", { 0, 0 }, { 0, -1 })
         set_win_opts(ctx.preview_winid, true)
     end)
 end
@@ -204,6 +208,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
     local curbuf = vim.api.nvim_win_get_buf(ctx.preview_winid)
     if curbuf == bufnr then
         kit.set_win_cursor_pos(ctx.preview_winid, loc)
+        kit.highlight_cursor(bufnr, loc)
         return
     end
 
@@ -223,6 +228,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
             set_win_opts(ctx.preview_winid, false)
             kit.set_win_cursor_pos(ctx.preview_winid, loc)
+            kit.highlight_cursor(bufnr, loc)
 
 
             local ft = nil
@@ -241,6 +247,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
             set_win_opts(ctx.preview_winid, false)
         end)
         kit.set_win_cursor_pos(ctx.preview_winid, loc)
+        kit.highlight_cursor(bufnr, loc)
     end
 end
 
@@ -252,14 +259,19 @@ _M.preview = function(ctx, loc)
         return
     end
 
-    if kit.is_binary(loc.path) then
-        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ")
-        return
-    end
-
     local st = vim.uv.fs_stat(loc.path)
     if not st then
         update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Stat Failed ")
+        return
+    end
+
+    if st.size == 0 then
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Empty File ")
+        return
+    end
+
+    if kit.is_binary(loc.path) then
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ")
         return
     end
 

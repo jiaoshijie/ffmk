@@ -104,12 +104,16 @@ _M.cmd_cfg = {
         prompt = "Grep❯ ",
         query = nil,
         cwd = nil,
-        -- options
+        -- commen options  -- config switched using keymap
         follow = false,  -- maybe need --no-messages
         hidden = false,
         no_ignore = false,
+        -- options
+        whole_word = false,
+        fixed_string = false,
         smart_case = true,
-        fixed_string = true,
+        -- extra options
+        extra_options = nil,  -- should be a table
     },
 }
 

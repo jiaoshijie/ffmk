@@ -10,7 +10,8 @@ local action = require('ffmk.action')
 --- @field path string?
 --- @field row number?
 --- @field col number?
---- @field helptag string?
+--- @field helptag table?  { tag = "", pattern = "" }
+--- @field ft string? filetype
 
 --- @class QfLoc
 --- @field filename string
@@ -84,13 +85,13 @@ local validate_env = function()
     return true
 end
 
---- @param cfg table ctx.ui_cfg
+--- @param cfg table? ctx.ui_cfg
 local config_ui_cfg = function(cfg)
     ctx.ui_cfg = vim.tbl_extend('force', default_cfg.ui_cfg, cfg or {})
 end
 
 --- @param name string ctx.name
---- @param cfg table ctx.cmd_cfg
+--- @param cfg table? ctx.cmd_cfg
 local config_cmd_cfg = function(name, cfg)
     ctx.name = name;
     ctx.cmd_cfg = vim.tbl_extend('force', default_cfg.cmd_cfg[name], cfg or {})
@@ -100,7 +101,7 @@ local set_target_winid = function()
     ctx.target_winid = vim.fn.win_getid()
 end
 
---- @param cfg table { ui = {}, cmd = {} }
+--- @param cfg table? { ui = {}, cmd = {} }
 --- @return boolean
 _M.setup = function(name, cfg)
     if not validate_env() then
@@ -211,6 +212,24 @@ local gen_grep_cmd = function(cfg)
     return cmd
 end
 
+--- @param cfg table ctx.cmd_cfg
+--- @return string?
+local gen_helptags_cmd = function(cfg)
+    local _ = cfg
+    local cmd = fmt("conv %d", default_cfg.conv_fc.helptags)
+    local tagfiles = vim.fn.globpath(vim.o.runtimepath, 'doc/tags', true, true)
+
+    if #tagfiles == 0 then
+        return nil
+    end
+
+    for _, tagfile in ipairs(tagfiles) do
+        cmd = fmt("%s %s", cmd, vim.fn.shellescape(tagfile, false))
+    end
+
+    return cmd
+end
+
 local set_keymaps = function(bufnr)
     vim.keymap.set('t', "<A-h>", function()
         action.toggle_hidden(ctx, _M)
@@ -304,13 +323,32 @@ rt_func_map.grep = function()
     })
 end
 
+rt_func_map.helptags = function()
+    local cmd = gen_helptags_cmd(ctx.cmd_cfg)
+    if not cmd then return end
+    -- 1. create bufers
+    prepare_buffers()
+    -- 2. create ui
+    ui.render(ctx)
+    -- 3. run fuzzy finder
+    ff.run({
+        name = ctx.name,
+        cmd = cmd,
+        cwd = ctx.cmd_cfg.cwd,
+        prompt = ctx.cmd_cfg.prompt,
+        query = ctx.query,
+        search = ctx.cmd_cfg.query,
+        search_title = ui.gen_grep_title(ctx.cmd_cfg),
+    })
+end
+
 ---------------------------------- rpc ---------------------------------------
 
 --- @param fc number
 --- @param arg string
 --- @return Loc
 local get_loc_from_fc = function(fc, arg)
-    local path, row, col, helptag
+    local path, row, col, helptag, ft
 
     if fc == default_cfg.rpc_fc.files_enter
         or fc == default_cfg.rpc_fc.files_preview then
@@ -322,8 +360,14 @@ local get_loc_from_fc = function(fc, arg)
         local b, e = string.find(arg, "\28")
         path = string.sub(arg, 1, b - 1)
         row, col, _ = string.match(string.sub(arg, e + 1), ":(%d+):(%d+):(.+)")
+    elseif fc == default_cfg.rpc_fc.helptags_enter
+        or fc == default_cfg.rpc_fc.helptags_preview then
+        local args = vim.fn.split(arg, "\28")
+        path = args[2]
+        helptag = { tag = args[1], pattern = args[3] }
+        ft = "help"
     else
-        assert(nil, "unreachable!")
+        kit.echo_err_msg("Invalid function code")
     end
 
     return {
@@ -331,6 +375,7 @@ local get_loc_from_fc = function(fc, arg)
         row = row and tonumber(row),
         col = col and tonumber(col) - 1,
         helptag = helptag,
+        ft = ft,
     }
 end
 
@@ -353,7 +398,7 @@ local get_qfloc_from_fc = function(fc, arg)
             })
         end
     else
-        assert(nil, "unreachable!")
+        kit.echo_err_msg("Invalid function code")
     end
     return qflist
 end
@@ -385,9 +430,13 @@ _M.rpc_edit_or_send2qf = function(fc, args)
     if #args == 1 then
         kit.edit(get_loc_from_fc(fc, args[1]))
     elseif #args > 1 then
-        vim.fn.setqflist(get_qfloc_from_fc(fc, args), 'r')
-        vim.cmd('copen | cfirst')
+        local qflist = get_qfloc_from_fc(fc, args)
+        if #qflist > 0 then
+            vim.fn.setqflist(qflist, 'r')
+            vim.cmd('copen | cfirst')
+        end
     end
+
     action.quit(_M)
 end
 

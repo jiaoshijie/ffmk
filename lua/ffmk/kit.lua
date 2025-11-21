@@ -129,9 +129,10 @@ end
 
 
 --- @param cwd string?
---- @param path string
---- @return string
+--- @param path string?
+--- @return string?
 _M.abs_path = function(cwd, path)
+    if not path then return nil end
     -- 1. remove the ansi escape color code, seems the fzf will strip it for me
     -- path = path:gsub("\27%[[0-9;]*m", "")
 
@@ -145,12 +146,20 @@ _M.abs_path = function(cwd, path)
 end
 
 --- @param winid number
+--- @param bufnr number?
 --- @param loc Loc
-_M.set_win_cursor_pos = function(winid, loc)
+_M.set_win_cursor_pos = function(winid, bufnr, loc)
     if loc.row then
         vim.api.nvim_win_set_cursor(winid, { loc.row, loc.col or 0, })
     elseif loc.helptag then
-        -- TODO(helptag):
+        if not bufnr then return end
+        vim.api.nvim_buf_call(bufnr, function()
+            vim.api.nvim_win_set_cursor(winid, { 1,  0, })
+            local lnum = vim.fn.search("\\V" .. loc.helptag.pattern, 'W')
+            if lnum > 0 then
+                vim.api.nvim_win_set_cursor(winid, { lnum,  0, })
+            end
+        end)
     else
         return
     end
@@ -169,7 +178,6 @@ _M.highlight_cursor = function(bufnr, loc)
     if loc.row and loc.col then
         vim.hl.range(bufnr, ns, "FFMKPreviewCursor", { loc.row - 1, loc.col },
                         { loc.row - 1, loc.col + 1 })
-    elseif loc.helptag then
     else
         return
     end
@@ -191,8 +199,16 @@ _M.edit = function(loc)
         _M.echo_err_msg("No path found")
         return
     end
-    vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
-    _M.set_win_cursor_pos(0, loc)
+    if not loc.helptag then
+        vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
+        _M.set_win_cursor_pos(0, nil, loc)
+    else
+        local rtp = vim.fn.fnamemodify(loc.path, ":p:h:h")
+        if vim.fn.stridx(vim.o.runtimepath, rtp) < 0 then
+            vim.opt.runtimepath:append(rtp)
+        end
+        vim.cmd('help ' .. vim.fn.fnameescape(loc.helptag.tag))
+    end
 end
 
 --- @param prefer_winid number?

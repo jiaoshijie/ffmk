@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define FFMK_LOG_IMPLEMENTATION
 #define FFMK_LOG_FILE_NAME "tool_conv.log"
@@ -92,6 +93,75 @@ static void grep(char **argv) {
     }
 }
 
+static void helptags(char **argv) {
+    const char *ansi_tag = "\033[3;38:5:182m";
+    const char *ansi_fn = "\033[3;38:5:248m";
+    const char *sep = "\034";  // \034 \035 \036 \037
+
+    char *tag_path = NULL, tag_dir[MAX_PATH_LEN] = { 0 };
+    char item[8192] = { 0 }, *tag, *filename, *pattern;
+    char filepath[MAX_PATH_LEN] = { 0 };
+    log_infof("------------ [%s] ------------", __func__);
+    while (*argv) {
+        tag_path = *(argv++);
+        if (tag_path[0] != '/') {
+            log_infof("Must use absolute path: %s", tag_path);
+            continue;
+        }
+
+        size_t tag_path_len = strlen(tag_path);
+        log_infof("Process %s", tag_path);
+        if (tag_path_len >= MAX_PATH_LEN) {
+            log_infof("Something should not happen: path length is too big(%d:%s)", tag_path_len, tag_path);
+            continue;
+        }
+
+        if (access(tag_path, R_OK) != 0) {
+            log_infof("tagfile has no read permission: %s", tag_path);
+            continue;
+        }
+        strcpy(tag_dir, tag_path);
+        *strrchr(tag_dir, '/') = '\0';  // this is ok, because the first if condition
+        if (tag_dir[0] == '\0') {
+            log_infof("Whoa, there is a vim helptag file located in root directory, Good for you: %s", tagfile);
+            continue;
+        }
+
+        FILE *fp = fopen(tag_path, "r");
+        if (fp == NULL) {
+            log_infof("Open %s file failed: %s", tagfile, strerror(errno));
+            continue;
+        }
+
+        while(fgets(item, sizeof(item), fp)) {
+            size_t item_len = strlen(item);
+            if (item[item_len - 1] == '\n') item[item_len - 1] = '\0';
+
+            tag = item;
+            filename = strchr(tag, '\t');
+            if (filename == NULL) {
+                log_infof("Wrong tag item: %s", item);
+                continue;
+            }
+            pattern = strchr(filename + 1, '\t');
+            if (pattern == NULL) {
+                log_infof("Wrong tag item: %s", item);
+                continue;
+            }
+            *(filename++) = '\0';
+            *(pattern++) = '\0';
+
+            if (*pattern == '/') pattern++;
+
+            sprintf(filepath, "%s/%s", tag_dir, filename);
+            fprintf(stdout, "%s%s\033[0m%s%s%s%s%s  %s%s\033[0m\n", ansi_tag, tag,
+                    sep, filepath, sep, pattern, sep, ansi_fn, filename);
+        }
+
+        fclose(fp);
+    }
+}
+
 int main(int argc, char **argv) {
     (void) argc;
     program_name = *(argv++);
@@ -109,7 +179,7 @@ int main(int argc, char **argv) {
         grep(argv);
         break;
     case FC_HELPTAGS:
-        log_error("helptags not implemented yet!");
+        helptags(argv);
         break;
     default:
         log_errorf("unknow function code %d", func_code);

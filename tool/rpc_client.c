@@ -253,6 +253,8 @@ int main(int argc, char **argv) {
     case FC_GREP_ENTER:
     case FC_GREP_SEND2QF:
     case FC_GREP_PREVIEW:
+    case FC_HELPTAGS_ENTER:
+    case FC_HELPTAGS_PREVIEW:
         rpc_request(argc, argv, func_code);
         break;
     default:

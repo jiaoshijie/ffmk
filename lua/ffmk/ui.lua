@@ -210,7 +210,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
 
     local curbuf = vim.api.nvim_win_get_buf(ctx.preview_winid)
     if curbuf == bufnr then
-        kit.set_win_cursor_pos(ctx.preview_winid, loc)
+        kit.set_win_cursor_pos(ctx.preview_winid, bufnr, loc)
         kit.highlight_cursor(bufnr, loc)
         return
     end
@@ -230,9 +230,14 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
             end
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
             set_win_opts(ctx.preview_winid, false)
-            kit.set_win_cursor_pos(ctx.preview_winid, loc)
+            kit.set_win_cursor_pos(ctx.preview_winid, bufnr, loc)
             kit.highlight_cursor(bufnr, loc)
 
+
+            if loc.ft then
+                vim.api.nvim_set_option_value('filetype', loc.ft, { buf = bufnr })
+                return
+            end
 
             local ft = nil
             if syntax then ft = vim.filetype.match({ buf = bufnr, filename = filename }) end
@@ -249,7 +254,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
         vim.schedule(function()
             set_win_opts(ctx.preview_winid, false)
         end)
-        kit.set_win_cursor_pos(ctx.preview_winid, loc)
+        kit.set_win_cursor_pos(ctx.preview_winid, bufnr, loc)
         kit.highlight_cursor(bufnr, loc)
     end
 end

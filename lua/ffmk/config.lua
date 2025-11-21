@@ -71,12 +71,24 @@ _M.fzf_cfg = {
     grep = {
         opt = {
             ["--multi"] = true,
-            -- ["--header"]
         },
         bind = {
             fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_enter),
             fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.grep_send2qf),
             fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_preview),
+        },
+    },
+    helptags = {
+        opt = {
+            ["--no-multi"] = true,
+            ["--tiebreak"] = "begin",
+            ["--delimiter"] = "\28",
+            ["--with-nth"] = "1,4",
+            ["--nth"] = "1",
+        },
+        bind = {
+            fmt("enter:execute-silent(rpc_client %d {1..3} {n})", _M.rpc_fc.helptags_enter),
+            fmt("focus:execute-silent(rpc_client %d {1..3} {n})", _M.rpc_fc.helptags_preview),
         },
     },
 }
@@ -114,6 +126,9 @@ _M.cmd_cfg = {
         smart_case = true,
         -- extra options
         extra_options = nil,  -- should be a table
+    },
+    helptags = {
+        prompt = "Helptags❯ ",
     },
 }
 

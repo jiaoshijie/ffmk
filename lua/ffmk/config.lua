@@ -2,21 +2,29 @@ local _M = {}
 local fmt = string.format
 
 _M.conv_fc = {
-    files    = 0,
-    grep     = 1,
-    helptags = 2,
+    files      = 0,
+    grep       = 1,
+    helptags   = 2,
+    ctags      = 3,
+    gnu_global = 4,
 }
 
 _M.rpc_fc = {
-    quit             = 0,
-    query            = 1,
-    files_enter      = 2,
-    files_preview    = 3,
-    grep_enter       = 4,
-    grep_send2qf     = 5,
-    grep_preview     = 6,
-    helptags_enter   = 7,
-    helptags_preview = 8,
+    quit               = 0,
+    query              = 1,
+    files_enter        = 2,
+    files_preview      = 3,
+    grep_enter         = 4,
+    grep_send2qf       = 5,
+    grep_preview       = 6,
+    helptags_enter     = 7,
+    helptags_preview   = 8,
+    ctags_enter        = 9,
+    ctags_send2qf      = 10,
+    ctags_preview      = 11,
+    gnu_global_enter   = 12,
+    gnu_global_send2qf = 13,
+    gnu_global_preview = 14,
 }
 
 _M.fzf_cfg = {
@@ -91,6 +99,28 @@ _M.fzf_cfg = {
             fmt("focus:execute-silent(rpc_client %d {1..3} {n})", _M.rpc_fc.helptags_preview),
         },
     },
+    ctags = {
+        opt = {
+            ["--multi"] = true,
+            ["--delimiter"] = "\28",
+            ["--with-nth"] = "2",
+        },
+        bind = {
+            fmt("enter:execute-silent(rpc_client %d {1} {n})", _M.rpc_fc.ctags_enter),
+            fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.ctags_send2qf),
+            fmt("focus:execute-silent(rpc_client %d {1} {n})", _M.rpc_fc.ctags_preview),
+        },
+    },
+    gnu_global = {
+        opt = {
+            ["--multi"] = true,
+        },
+        bind = {
+            fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.gnu_global_enter),
+            fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.gnu_global_send2qf),
+            fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.gnu_global_preview),
+        },
+    },
 }
 
 _M.ui_cfg = {
@@ -129,6 +159,16 @@ _M.cmd_cfg = {
     },
     helptags = {
         prompt = "Helptags❯ ",
+    },
+    ctags = {
+        prompt = "Ctags❯ ",
+        path = nil,  -- an absolute path or nil(the current file)
+        options = nil, -- should be a table
+    },
+    gnu_global = {
+        prompt = "GnuGlobal❯ ",
+        query = nil,
+        options = nil, -- should be a table
     },
 }
 

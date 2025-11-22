@@ -22,6 +22,8 @@ enum FUNC_CODE {
     FC_FILES = 0,
     FC_GREP = 1,
     FC_HELPTAGS = 2,
+    FC_CTAGS = 3,
+    FC_GNU_GLOBAL = 4,
 };
 
 static const char *program_name = "conv";
@@ -123,13 +125,13 @@ static void helptags(char **argv) {
         strcpy(tag_dir, tag_path);
         *strrchr(tag_dir, '/') = '\0';  // this is ok, because the first if condition
         if (tag_dir[0] == '\0') {
-            log_infof("Whoa, there is a vim helptag file located in root directory, Good for you: %s", tagfile);
+            log_infof("Whoa, there is a vim helptag file located in root directory, Good for you: %s", tag_path);
             continue;
         }
 
         FILE *fp = fopen(tag_path, "r");
         if (fp == NULL) {
-            log_infof("Open %s file failed: %s", tagfile, strerror(errno));
+            log_infof("Open %s file failed: %s", tag_path, strerror(errno));
             continue;
         }
 
@@ -162,6 +164,55 @@ static void helptags(char **argv) {
     }
 }
 
+static void ctags(char **argv) {
+    (void) argv;
+    const char *ansi_ty = "\033[3;38:5:248m";  // type color
+    const char *sep = "\034";  // \034 \035 \036 \037
+
+    char line[8192] = { 0 }; // if a line is long then this, don't care
+    char *symbol = NULL, *type = NULL, *lnum = NULL, *end = NULL;
+    size_t read_len = 0;
+
+    log_infof("------------ [%s] ------------", __func__);
+
+    while (fgets(line, sizeof(line), stdin)) {
+        read_len = strlen(line);
+
+        if (line[read_len - 1] == '\n') {
+            line[read_len - 1] = '\0';
+        } else {
+            log_infof("get a very long line, started with: %s", line);
+            // NOTE: remove that line
+            while (fgets(line, sizeof(line), stdin)) {
+                read_len = strlen(line);
+                if (line[read_len - 1] == '\n') break;
+            }
+            break;
+        }
+        log_infof("%s", line);
+        symbol = line;
+        type = strchr(symbol, ' ');
+        if (type == NULL) {
+            log_errorf("wrong tag format: %s", symbol);
+        }
+        *(type++) = '\0';
+        while (*type == ' ') type++;
+        lnum = strchr(type, ' ');
+        if (lnum == NULL) {
+            log_errorf("wrong tag format: %s %s", symbol, type);
+        }
+        *(lnum++) = '\0';
+        while (*lnum == ' ') lnum++;
+        end = strchr(lnum, ' ');
+        if (end == NULL) {
+            log_errorf("wrong tag format: %s %s %s", symbol, type, lnum);
+        }
+        *end = '\0';
+
+        fprintf(stdout, "%s%s%s  %s%s\033[0m\n", lnum, sep, symbol, ansi_ty, type);
+    }
+}
+
 int main(int argc, char **argv) {
     (void) argc;
     program_name = *(argv++);
@@ -180,6 +231,9 @@ int main(int argc, char **argv) {
         break;
     case FC_HELPTAGS:
         helptags(argv);
+        break;
+    case FC_CTAGS:
+        ctags(argv);
         break;
     default:
         log_errorf("unknow function code %d", func_code);

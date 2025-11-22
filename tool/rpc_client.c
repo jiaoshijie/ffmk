@@ -35,15 +35,21 @@ static const char *program_name = "rpc_client";
 static const char *g_sock_path = NULL;
 
 enum FUNC_CODE {
-    FC_QUIT             = 0,
-    FC_QUERY            = 1,
-    FC_FILES_ENTER      = 2,
-    FC_FILES_PREVIEW    = 3,
-    FC_GREP_ENTER       = 4,
-    FC_GREP_SEND2QF     = 5,
-    FC_GREP_PREVIEW     = 6,
-    FC_HELPTAGS_ENTER   = 7,
-    FC_HELPTAGS_PREVIEW = 8,
+    FC_QUIT               = 0,
+    FC_QUERY              = 1,
+    FC_FILES_ENTER        = 2,
+    FC_FILES_PREVIEW      = 3,
+    FC_GREP_ENTER         = 4,
+    FC_GREP_SEND2QF       = 5,
+    FC_GREP_PREVIEW       = 6,
+    FC_HELPTAGS_ENTER     = 7,
+    FC_HELPTAGS_PREVIEW   = 8,
+    FC_CTAGS_ENTER        = 9,
+    FC_CTAGS_SEND2QF      = 10,
+    FC_CTAGS_PREVIEW      = 11,
+    FC_GNU_GLOBAL_ENTER   = 12,
+    FC_GNU_GLOBAL_SEND2QF = 13,
+    FC_GNU_GLOBAL_PREVIEW = 14,
     FC_MAX,
 };
 _Static_assert(FC_MAX < 0x80, "Whoa! So Many Function Code Here!!!");  // msgpack `positive fixint` range
@@ -255,6 +261,9 @@ int main(int argc, char **argv) {
     case FC_GREP_PREVIEW:
     case FC_HELPTAGS_ENTER:
     case FC_HELPTAGS_PREVIEW:
+    case FC_CTAGS_ENTER:
+    case FC_CTAGS_SEND2QF:
+    case FC_CTAGS_PREVIEW:
         rpc_request(argc, argv, func_code);
         break;
     default:

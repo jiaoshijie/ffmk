@@ -19,7 +19,7 @@ local action = require('ffmk.action')
 --- @field col number?
 --- @field text string
 
--- { fzf, rg, fd, ctags, gtags }
+-- { fzf, rg, fd, ctags, gnu_global }
 local rt_env = {}
 
 local ctx = {
@@ -40,7 +40,7 @@ local ctx = {
 
 local rt_func_map = {}
 
---- @param tools table?  { rg, fd, ctags, gtags }
+--- @param tools table?  { rg, fd, ctags, gnu_global }
 --- @return boolean
 local validate_env = function(tools)
     tools = tools or {}
@@ -57,6 +57,7 @@ local validate_env = function(tools)
     end
 
     -- NOTE: i don't know which version is suitable, so just using the versions when i write this plugin
+
     -- 3. if fzf version not match
     if rt_env.fzf == nil then
         local major, minor, _ = kit.get_cmd_version('fzf', '--version')
@@ -85,7 +86,24 @@ local validate_env = function(tools)
     end
 
     -- 6. check ctags
-    -- 7. check gtags
+    if tools.ctags and rt_env.ctags == nil then
+        local major, minor, _ = kit.get_cmd_version('ctags', '--version')
+        rt_env.ctags = major ~= nil and (major > 5 or (major == 5 and minor >= 9))
+    end
+    if tools.ctags and rt_env.ctags == false then
+        kit.echo_err_msg("ctags version is below 5.9.0")
+        return false
+    end
+
+    -- 7. check gnu_global
+    if tools.gnu_global and rt_env.gnu_global == nil then
+        local major, minor, _ = kit.get_cmd_version('global', '--version')
+        rt_env.gnu_global = major ~= nil and (major > 6 or (major == 6 and minor >= 6))
+    end
+    if tools.gnu_global and rt_env.gnu_global == false then
+        kit.echo_err_msg("gnu-global version is below 6.6.0")
+        return false
+    end
 
     return true
 end
@@ -145,6 +163,7 @@ _M.release = function(exit, main, preview)
         ctx.ui_cfg = nil
         ctx.cmd_cfg = nil
         ctx.query = nil
+        ctx.loc = nil
 
         -- NOTE: defer the deletion of the preview buf list a little bit
         -- then it will not block the ui
@@ -232,6 +251,29 @@ local gen_helptags_cmd = function(cfg)
     for _, tagfile in ipairs(tagfiles) do
         cmd = fmt("%s %s", cmd, vim.fn.shellescape(tagfile, false))
     end
+
+    return cmd
+end
+
+--- @param cfg table ctx.cmd_cfg
+--- @return string?
+local gen_ctags_cmd = function(cfg)
+    local cmd = "ctags -x"
+
+    if not cfg.path then
+        cfg.path = vim.fn.expand("%:p")
+    end
+
+    if #cfg.path == 0 or cfg.path:sub(1, 1) ~= '/' then
+        return nil
+    end
+
+    if type(cfg.options) == "table" and #cfg.options > 0 then
+        cmd = fmt("%s %s", cmd, table.concat(cfg.options, ' '))
+    end
+
+    cmd = fmt("%s %s | conv %d", cmd, vim.fn.shellescape(cfg.path, false),
+                default_cfg.conv_fc.ctags)
 
     return cmd
 end
@@ -340,11 +382,24 @@ rt_func_map.helptags = function()
     ff.run({
         name = ctx.name,
         cmd = cmd,
-        cwd = ctx.cmd_cfg.cwd,
         prompt = ctx.cmd_cfg.prompt,
         query = ctx.query,
-        search = ctx.cmd_cfg.query,
-        search_title = ui.gen_grep_title(ctx.cmd_cfg),
+    })
+end
+
+rt_func_map.ctags = function()
+    local cmd = gen_ctags_cmd(ctx.cmd_cfg)
+    if not cmd then return end
+    -- 1. create bufers
+    prepare_buffers()
+    -- 2. create ui
+    ui.render(ctx)
+    -- 3. run fuzzy finder
+    ff.run({
+        name = ctx.name,
+        cmd = cmd,
+        prompt = ctx.cmd_cfg.prompt,
+        query = ctx.query,
     })
 end
 
@@ -361,7 +416,7 @@ local get_loc_from_fc = function(fc, arg)
         path = ctx.cmd_cfg.filename_first
                 and arg:gsub("([^\t]+)\t(.+)", "%2/%1") or arg
     elseif fc == default_cfg.rpc_fc.grep_enter
-        or fc == default_cfg.rpc_fc.grep_send2qf
+        or fc == default_cfg.rpc_fc.grep_send2qf  -- NOTE: if only select one item, just open it
         or fc == default_cfg.rpc_fc.grep_preview then
         local b, e = string.find(arg, "\28")
         path = string.sub(arg, 1, b - 1)
@@ -372,6 +427,13 @@ local get_loc_from_fc = function(fc, arg)
         path = args[2]
         helptag = { tag = args[1], pattern = args[3] }
         ft = "help"
+    elseif fc == default_cfg.rpc_fc.ctags_enter
+        or fc == default_cfg.rpc_fc.ctags_preview then
+        path = ctx.cmd_cfg.path
+        row = arg
+    elseif fc == default_cfg.rpc_fc.ctags_send2qf then  -- the format is different
+        path = ctx.cmd_cfg.path
+        row = vim.fn.split(arg, "\28")[1]
     else
         kit.echo_err_msg("Invalid function code")
     end
@@ -379,7 +441,7 @@ local get_loc_from_fc = function(fc, arg)
     return {
         path = kit.abs_path(ctx.cmd_cfg.cwd, path),
         row = row and tonumber(row),
-        col = col and tonumber(col) - 1,
+        col = col and tonumber(col) - 1,  -- NOTE: maybe this will never fail
         helptag = helptag,
         ft = ft,
     }
@@ -401,6 +463,15 @@ local get_qfloc_from_fc = function(fc, arg)
                 lnum = lnum,
                 col = col,
                 text = text,
+            })
+        end
+    elseif fc == default_cfg.rpc_fc.ctags_send2qf then
+        for _, val in ipairs(arg) do
+            local args = vim.fn.split(val, "\28")
+            table.insert(qflist, {
+                filename = ctx.cmd_cfg.path,
+                lnum = args[1],
+                text = args[2],
             })
         end
     else

@@ -19,4 +19,10 @@ _M.helptags = function(cfg)
     rt.run()
 end
 
+--- @param cfg table? { ui = {}, cmd = {} }
+_M.ctags = function(cfg)
+    if not rt.setup("ctags", cfg, { ctags = true }) then return end
+    rt.run()
+end
+
 return _M

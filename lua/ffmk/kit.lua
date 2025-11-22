@@ -155,10 +155,7 @@ _M.set_win_cursor_pos = function(winid, bufnr, loc)
         if not bufnr then return end
         vim.api.nvim_buf_call(bufnr, function()
             vim.api.nvim_win_set_cursor(winid, { 1,  0, })
-            local lnum = vim.fn.search("\\V" .. loc.helptag.pattern, 'W')
-            if lnum > 0 then
-                vim.api.nvim_win_set_cursor(winid, { lnum,  0, })
-            end
+            vim.fn.search("\\V" .. loc.helptag.pattern, 'W')
         end)
     else
         return
@@ -207,7 +204,9 @@ _M.edit = function(loc)
         if vim.fn.stridx(vim.o.runtimepath, rtp) < 0 then
             vim.opt.runtimepath:append(rtp)
         end
-        vim.cmd('help ' .. vim.fn.fnameescape(loc.helptag.tag))
+        vim.schedule(function()
+            vim.cmd('help ' .. vim.fn.fnameescape(loc.helptag.tag))
+        end)
     end
 end
 

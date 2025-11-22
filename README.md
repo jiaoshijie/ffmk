@@ -11,11 +11,7 @@ It's a simple fzf wrapper for neovim.
 - [ ] tags(ctags, gnu-global) not only simple filter raw tags
   + `ctags` (function definitions, methods, global variables)
   + `gtags` gnu-global (function definitions, methods, global variables)
+
+### low priority
 - [ ] lsp
   + `lsp_docmuent_symbols` filter only useful symbols (function definitions, methods, global variables) only for current buffer
-
-## other repos'TODO
-
-- [ ] `undotree` and `onlysearch` should not open when in command line window
-- [ ] `undotree` make the cursor always in the middle of the undotree window
-- [ ] `onlysearch` remove the Search virtual text from the ui

@@ -19,7 +19,7 @@ local action = require('ffmk.action')
 --- @field col number?
 --- @field text string
 
--- { fzf, rg, fd }
+-- { fzf, rg, fd, ctags, gtags }
 local rt_env = {}
 
 local ctx = {
@@ -40,8 +40,10 @@ local ctx = {
 
 local rt_func_map = {}
 
+--- @param tools table?  { rg, fd, ctags, gtags }
 --- @return boolean
-local validate_env = function()
+local validate_env = function(tools)
+    tools = tools or {}
     -- 1. if there has been already an opened instance
     if ctx.winid ~= nil then
         -- close the previous one
@@ -67,20 +69,23 @@ local validate_env = function()
     end
 
     -- 4. if rg version not match
-    if rt_env.rg == nil then
+    if tools.rg and rt_env.rg == nil then
         local major, _, _ = kit.get_cmd_version('rg', '--version')
         rt_env.rg = major ~= nil and major >= 13
     end
-    if rt_env.rg == false then
+    if tools.rg and rt_env.rg == false then
         kit.echo_err_msg("ripgrep version is below 13.0.0")
         return false
     end
 
     -- 5. if fd version not match, this will not fail, but will use rg instead
-    if rt_env.fd == nil then
+    if tools.fd and rt_env.fd == nil then
         local major, minor, _ = kit.get_cmd_version('fd', '--version')
         rt_env.fd = major ~= nil and (major > 8 or (major == 7 and minor >= 3))
     end
+
+    -- 6. check ctags
+    -- 7. check gtags
 
     return true
 end
@@ -102,9 +107,10 @@ local set_target_winid = function()
 end
 
 --- @param cfg table? { ui = {}, cmd = {} }
+--- @param tools table?
 --- @return boolean
-_M.setup = function(name, cfg)
-    if not validate_env() then
+_M.setup = function(name, cfg, tools)
+    if not validate_env(tools) then
         return false
     end
     set_target_winid()

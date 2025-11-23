@@ -133,10 +133,6 @@ end
 --- @return string?
 _M.abs_path = function(cwd, path)
     if not path then return nil end
-    -- 1. remove the ansi escape color code, seems the fzf will strip it for me
-    -- path = path:gsub("\27%[[0-9;]*m", "")
-
-    -- 2. get the real path according to the function code
     if string.sub(path, 1, 1) ~= '/' then
         path = string.sub(path, 1, 2) == './' and string.sub(path, 3) or path
         path = vim.fn.expand(cwd or vim.fn.getcwd()) .. '/' .. path

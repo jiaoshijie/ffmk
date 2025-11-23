@@ -232,7 +232,8 @@ local gen_grep_cmd = function(cfg)
     end
 
     cfg.query = vim.fn.shellescape(cfg.query, false)
-    cmd = fmt([[%s %s | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
+    -- NOTE: -e: useful to protect querys starting with ´-´.
+    cmd = fmt([[%s -e %s | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
 
     return cmd
 end

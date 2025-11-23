@@ -4,8 +4,7 @@ It's a simple fzf wrapper for neovim.
 
 ## compile tools
 
-- `make -B` only error info
-- `CFLAGS="-DFFMK_DUMP_LOG" make -B` with debug dump info
+`make help` for more information
 
 ## TODO
 
@@ -28,3 +27,5 @@ vim.api.nvim_create_user_command("Ctags", function()
     })
 end, { nargs = 0 })
 ```
+
+### gnu-global

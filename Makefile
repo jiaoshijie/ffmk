@@ -8,7 +8,9 @@ CFLAGS += -Wall -Wextra -O3
 tool: bin/conv bin/rpc_client
 
 help:
-	$(V)$(EDITOR) ./Makefile
+	$(V)echo -e 'Usage:'
+	$(V)echo -e '\t`make -B`: only report error message'
+	$(V)echo -e '\t`CFLAGS="-DFFMK_DUMP_LOG" make -B`: dump all messages'
 
 check_length:
 	$(V)echo "The maximum file name length is $(MAX_FILENAME_LEN)"

@@ -283,16 +283,18 @@ _M.preview = function(ctx, loc)
         return
     end
 
-    if st.size > 5 * 1024 * 1024 then  -- 5M
+    local bufnr = vim.fn.bufnr(loc.path)
+    local loaded = bufnr ~= -1
+
+    if not loaded and st.size > 5 * 1024 * 1024 then  -- 5M
         update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Big File ")
         return
     end
 
-    local bufnr, loaded = vim.fn.bufnr(loc.path), true
-    if bufnr == -1 then bufnr = ctx.preview_bufs[loc.path] end
+    if not loaded then bufnr = ctx.preview_bufs[loc.path] end
+    loaded = bufnr ~= nil
 
-    if not bufnr then
-        loaded = false
+    if not loaded then
         bufnr = vim.api.nvim_create_buf(false, true)
         ctx.preview_bufs[loc.path] = bufnr
     end

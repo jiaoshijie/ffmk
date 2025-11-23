@@ -264,6 +264,9 @@ int main(int argc, char **argv) {
     case FC_CTAGS_ENTER:
     case FC_CTAGS_SEND2QF:
     case FC_CTAGS_PREVIEW:
+    case FC_GNU_GLOBAL_ENTER:
+    case FC_GNU_GLOBAL_SEND2QF:
+    case FC_GNU_GLOBAL_PREVIEW:
         rpc_request(argc, argv, func_code);
         break;
     default:

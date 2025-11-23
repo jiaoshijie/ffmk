@@ -13,7 +13,7 @@ _M.get_cmd_version = function(cmd, ver_flag)
     if vim.fn.executable(cmd) ~= 1 then
         return nil, nil, nil
     end
-    local obj = vim.system({cmd, ver_flag}, {
+    local obj = vim.system({ cmd, ver_flag }, {
         text = true,
         clear_env = true,
     }):wait()
@@ -216,6 +216,28 @@ _M.goto_winid = function(prefer_winid)
         -- TODO(goto_winid): check `winfixbuf` option
         vim.fn.win_gotoid(vim.fn.win_getid(1))
     end
+end
+
+--- @param cmd string
+--- @param cwd string?
+--- @param winid number
+--- @return boolean
+_M.gnu_global_definition = function(cmd, cwd, winid)
+    local res = vim.fn.systemlist(vim.split(cmd, '|')[1])
+    if vim.v.shell_error ~= 0 or #res ~= 1 then
+        return false
+    end
+    local path, lnum, _ = res[1]:match("(.+)\t(%d+)\t(.+)")
+
+    if not path or not lnum then return false end
+
+    _M.goto_winid(winid)
+    _M.edit({
+        path = _M.abs_path(cwd, path),
+        row = tonumber(lnum),
+    })
+
+    return true
 end
 
 return _M

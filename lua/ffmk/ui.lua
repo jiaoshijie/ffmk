@@ -1,6 +1,7 @@
 local _M = {}
 local fmt = string.format
 local kit = require('ffmk.kit')
+local default_cfg = require('ffmk.config')
 
 -- TreeSitter Injection: https://github.com/ibhagwan/fzf-lua/issues/1485
 -- Seems very cool, maybe add it later
@@ -101,6 +102,19 @@ _M.gen_grep_title = function(cfg)
     flag = cfg.smart_case and flag .. 'S' or flag
     flag = cfg.fixed_string and flag .. 'F' or flag
     flag = cfg.whole_word and flag .. 'w' or flag
+
+    return #flag > 0 and fmt("Pattern(%s)", flag) or "Pattern"
+end
+
+--- @param cfg table runtime_ctx.cmd_cfg  gnu_global
+--- @return string
+_M.gen_gnu_global_title = function(cfg)
+    local isfile = cfg.feat == default_cfg.gnu_global_feats.file_symbols
+    if isfile then return "Path" end
+    local flag = ""
+
+    flag = cfg.ignore_case and flag .. 'I' or flag .. 's'
+    flag = cfg.fixed_string and flag .. 'F' or flag
 
     return #flag > 0 and fmt("Pattern(%s)", flag) or "Pattern"
 end

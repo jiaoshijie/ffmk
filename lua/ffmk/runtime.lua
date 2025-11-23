@@ -280,6 +280,53 @@ local gen_ctags_cmd = function(cfg)
     return cmd
 end
 
+--- @param cfg table ctx.cmd_cfg
+--- @return string?
+local gen_gnu_global_cmd = function(cfg)
+    if not cfg.feat then
+        kit.echo_err_msg("gnu global `feat` not specified")
+        return nil
+    end
+
+    local isfile = cfg.feat == default_cfg.gnu_global_feats.file_symbols
+
+    if type(cfg.query) ~= "string" or #cfg.query == 0 then
+        if isfile then
+            cfg.query = vim.fn.expand("%:p")
+            if #cfg.query == 0 or cfg.query:sub(1, 1) ~= '/' then
+                kit.echo_err_msg("no file path specified")
+                return nil
+            end
+        else
+            kit.echo_err_msg("query string not specified")
+            return nil
+        end
+    end
+
+    local cmd = "global -q -F --color=always --result=ctags-mod --path-style=relative"
+
+    if cfg.conf then
+        cmd = fmt("%s --gtagsconf %s", vim.fn.shellescape(cfg.conf, false))
+    end
+    if cfg.label then
+        cmd = fmt("%s --gtagslabel %s", vim.fn.shellescape(cfg.label, false))
+    end
+
+    if cfg.cwd then
+        cmd = fmt("%s -C %s", vim.fn.shellescape(cfg.cwd, false))
+    end
+
+    if not isfile then
+        cmd = cfg.ignore_case and fmt("%s -i", cmd) or fmt("%s -M", cmd)
+        cmd = cfg.fixed_string and fmt("%s --literal", cmd) or cmd
+    end
+
+    cmd = fmt("%s %s %s %s | conv %d", cmd, cfg.feat, isfile and "" or "-e",
+                vim.fn.shellescape(cfg.query, false), default_cfg.conv_fc.gnu_global)
+
+    return cmd
+end
+
 --- @param bufnr number
 local set_keymaps = function(bufnr)
     --- @param mode string
@@ -398,6 +445,34 @@ rt_func_map.ctags = function()
     })
 end
 
+rt_func_map.gnu_global = function()
+    local cmd = gen_gnu_global_cmd(ctx.cmd_cfg)
+    if not cmd then return end
+
+    -- NOTE: if there is only one definition, directly jump to it
+    if ctx.cmd_cfg.auto_jump_definition
+        and ctx.cmd_cfg.feat == default_cfg.gnu_global_feats.definition
+        and kit.gnu_global_definition(cmd, ctx.cmd_cfg.cwd, ctx.winid) then
+        _M.release(true, true, true)
+        return
+    end
+
+    -- 1. create bufers
+    prepare_buffers()
+    -- 2. create ui
+    ui.render(ctx)
+    -- 3. run fuzzy finder
+    ff.run({
+        name = ctx.name,
+        cmd = cmd,
+        cwd = ctx.cmd_cfg.cwd,
+        prompt = ctx.cmd_cfg.prompt,
+        query = ctx.query,
+        search = ctx.cmd_cfg.query,
+        search_title = ui.gen_gnu_global_title(ctx.cmd_cfg),
+    })
+end
+
 ---------------------------------- rpc ---------------------------------------
 
 --- @param fc number
@@ -429,6 +504,12 @@ local get_loc_from_fc = function(fc, arg)
     elseif fc == default_cfg.rpc_fc.ctags_send2qf then  -- the format is different
         path = ctx.cmd_cfg.path
         row = vim.fn.split(arg, "\28")[1]
+    elseif fc == default_cfg.rpc_fc.gnu_global_enter
+        or fc == default_cfg.rpc_fc.gnu_global_send2qf
+        or fc == default_cfg.rpc_fc.gnu_global_preview then
+        local b, e = string.find(arg, "\28")
+        path = string.sub(arg, 1, b - 1)
+        row, _ = string.match(string.sub(arg, e + 1), ":(%d+):(.+)")
     else
         kit.echo_err_msg("Invalid function code")
     end
@@ -467,6 +548,17 @@ local get_qfloc_from_fc = function(fc, arg)
                 filename = ctx.cmd_cfg.path,
                 lnum = args[1],
                 text = args[2],
+            })
+        end
+    elseif fc == default_cfg.rpc_fc.gnu_global_send2qf then
+        for _, val in ipairs(arg) do
+            local b, e = string.find(val, "\28")
+            filename = string.sub(val, 1, b - 1)
+            lnum, text = string.match(string.sub(val, e + 1), ":(%d+):(.+)")
+            table.insert(qflist, {
+                filename = ctx.cmd_cfg.path,
+                lnum = lnum,
+                text = text,
             })
         end
     else

@@ -213,6 +213,49 @@ static void ctags(char **argv) {
     }
 }
 
+static void gnu_global(char **argv) {
+    (void) argv;
+    const char *ansi_path = "\033[3;38:5:13m";
+    const char *ansi_lnum = "\033[3;38:5:11m";
+    const char *sep = "\034";  // \034 \035 \036 \037
+
+    char line[8192] = { 0 }; // if a line is long then this, don't care
+    size_t read_len = 0;
+    char *path = NULL, *lnum = NULL, *match = NULL;
+
+    log_infof("------------ [%s] ------------", __func__);
+    while (fgets(line, sizeof(line), stdin)) {
+        read_len = strlen(line);
+
+        if (line[read_len - 1] == '\n') {
+            line[read_len - 1] = '\0';
+        } else {
+            log_infof("get a very long line, started with: %s", line);
+            // NOTE: remove that line
+            while (fgets(line, sizeof(line), stdin)) {
+                read_len = strlen(line);
+                if (line[read_len - 1] == '\n') break;
+            }
+            break;
+        }
+        log_infof("%s", line);
+        path = line;
+        lnum = strchr(path, '\t');
+        if (lnum == NULL) {
+            log_errorf("wrong tag format: %s", path);
+        }
+        *(lnum++) = '\0';
+        match = strchr(lnum, '\t');
+        if (match == NULL) {
+            log_errorf("wrong tag format: %s %s", path, lnum);
+        }
+        *(match++) = '\0';
+
+        fprintf(stdout, "%s%s\033[0m%s:%s%s\033[0m:%s\n", ansi_path, path, sep,
+                ansi_lnum, lnum, match);
+    }
+}
+
 int main(int argc, char **argv) {
     (void) argc;
     program_name = *(argv++);
@@ -234,6 +277,9 @@ int main(int argc, char **argv) {
         break;
     case FC_CTAGS:
         ctags(argv);
+        break;
+    case FC_GNU_GLOBAL:
+        gnu_global(argv);
         break;
     default:
         log_errorf("unknow function code %d", func_code);

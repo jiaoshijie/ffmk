@@ -15,6 +15,9 @@ local rpc_map = {
     [rpc_fc.ctags_enter] = rt.rpc_edit_or_send2qf,
     [rpc_fc.ctags_send2qf] = rt.rpc_edit_or_send2qf,
     [rpc_fc.ctags_preview] = rt.rpc_preview,
+    [rpc_fc.gnu_global_enter] = rt.rpc_edit_or_send2qf,
+    [rpc_fc.gnu_global_send2qf] = rt.rpc_edit_or_send2qf,
+    [rpc_fc.gnu_global_preview] = rt.rpc_preview,
 }
 
 _M.call = function(args)

@@ -27,6 +27,15 @@ _M.rpc_fc = {
     gnu_global_preview = 14,
 }
 
+--- @enum GnuGlobalFeat
+_M.gnu_global_feats = {
+    file_symbols = '-f',  -- get all symbols from a file
+    definition = '-d',
+    reference = '-r',
+    grep_symbols = '-g',
+    other_symbols = '-s',  -- the symbol that no definition
+}
+
 _M.fzf_cfg = {
     bin = "fzf",
     colors = {
@@ -180,9 +189,9 @@ _M.cmd_cfg = {
         hidden = false,
         no_ignore = false,
         -- options
-        whole_word = false,
-        fixed_string = false,
-        smart_case = true,
+        whole_word = false,  -- [w]
+        fixed_string = false,  -- [F]
+        smart_case = true,   -- [S]
         -- extra options
         extra_options = nil,  -- should be a table
     },
@@ -194,10 +203,23 @@ _M.cmd_cfg = {
         path = nil,  -- an absolute path or nil(the current file)
         options = nil, -- should be a table
     },
-    gnu_global = {
+    gnu_global = {  -- https://www.gnu.org/software/global/
         prompt = "GnuGlobal❯ ",
         query = nil,
-        options = nil, -- should be a table
+        cwd = nil,
+
+        -- config switched using keymap
+        -- NOTE: file symbols not support the two option
+        ignore_case = false,   -- true: [I], false: [s]
+        fixed_string = false,  -- [F]
+
+        -- options
+        feat = nil, ---@type GnuGlobalFeat?
+        conf = nil,  -- an absolute path to the gtags.conf or nil
+        label = nil,  -- which parser to use for parse the GTAGS
+        -- encode_path = false,  -- NOTE: it is not used
+
+        auto_jump_definition = true,  -- when there is only one definition, directly jump to it
     },
 }
 

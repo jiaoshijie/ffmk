@@ -25,4 +25,10 @@ _M.ctags = function(cfg)
     rt.run()
 end
 
+--- @param cfg table? { ui = {}, cmd = {} }
+_M.gnu_global = function(cfg)
+    if not rt.setup("gnu_global", cfg, { gnu_global = true }) then return end
+    rt.run()
+end
+
 return _M

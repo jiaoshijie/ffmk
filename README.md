@@ -4,16 +4,27 @@ It's a simple fzf wrapper for neovim.
 
 ## compile tools
 
-- dump log: `CFLAGS="-DFFMK_DUMP_LOG" make -B`
+- `make -B` only error info
+- `CFLAGS="-DFFMK_DUMP_LOG" make -B` with debug dump info
 
-### TODO
+## TODO
 
-- [ ] tags(ctags, gnu-global) not only simple filter raw tags
-  + [x] `ctags` (function definitions, methods, global variables)
-    * [ ] remove the user command from the pluing/ffmk.lua
-  + `gnu-global` (function definitions, methods, global variables)
+- [ ] `gnu-global` (function definitions, methods, global variables)
 
 ### low priority
 
 - [ ] lsp
   + `lsp_docmuent_symbols` filter only useful symbols (function definitions, methods, global variables) only for current buffer
+
+## Examples
+
+### ctags
+
+```lua
+vim.api.nvim_create_user_command("Ctags", function()
+    require('ffmk').ctags({
+        ui = { preview = true },
+        cmd = { options = { "--kinds-c=-e" } },
+    })
+end, { nargs = 0 })
+```

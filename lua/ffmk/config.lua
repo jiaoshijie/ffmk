@@ -102,6 +102,7 @@ _M.fzf_cfg = {
     ctags = {
         opt = {
             ["--multi"] = true,
+            ["--no-sort"] = true,
             ["--delimiter"] = "\28",
             ["--with-nth"] = "2",
         },
@@ -129,6 +130,34 @@ _M.ui_cfg = {
     row     = 0.50,
     width   = 0.90,
     height  = 0.90,
+}
+
+_M.keymaps_cfg = {
+    global = {
+        ["n"] = {
+            ["<C-[>"] = "quit",
+        },
+        ["t"] = {
+            ["<C-c>"] = "quit",
+            ["<C-u>"] = "preview_scroll_up",
+            ["<C-d>"] = "preview_scroll_down",
+            ["<A-p>"] = "toggle_preview",
+        },
+    },
+    files = {
+        ["t"] = {
+            ["<A-h>"] = "toggle_hidden",
+            ["<A-i>"] = "toggle_no_ignore",
+            ["<A-f>"] = "toggle_follow",
+        },
+    },
+    grep = {
+        ["t"] = {
+            ["<A-h>"] = "toggle_hidden",
+            ["<A-i>"] = "toggle_no_ignore",
+            ["<A-f>"] = "toggle_follow",
+        },
+    },
 }
 
 _M.cmd_cfg = {

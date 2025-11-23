@@ -265,6 +265,7 @@ local gen_ctags_cmd = function(cfg)
     end
 
     if #cfg.path == 0 or cfg.path:sub(1, 1) ~= '/' then
+        kit.echo_err_msg("no file path specified")
         return nil
     end
 
@@ -272,39 +273,32 @@ local gen_ctags_cmd = function(cfg)
         cmd = fmt("%s %s", cmd, table.concat(cfg.options, ' '))
     end
 
-    cmd = fmt("%s %s | conv %d", cmd, vim.fn.shellescape(cfg.path, false),
+    cmd = fmt("%s %s | conv %d | sort -n", cmd, vim.fn.shellescape(cfg.path, false),
                 default_cfg.conv_fc.ctags)
 
     return cmd
 end
 
+--- @param bufnr number
 local set_keymaps = function(bufnr)
-    vim.keymap.set('t', "<A-h>", function()
-        action.toggle_hidden(ctx, _M)
-    end, { buffer = bufnr })
-    vim.keymap.set('t', "<A-i>", function()
-        action.toggle_no_ignore(ctx, _M)
-    end, { buffer = bufnr })
-    vim.keymap.set('t', "<A-f>", function()
-        action.toggle_follow(ctx, _M)
-    end, { buffer = bufnr })
-    vim.keymap.set('t', "<A-p>", function()
-        action.toggle_preview(ctx, _M)
-    end, { buffer = bufnr })
-    vim.keymap.set('t', '<C-c>', function()
-        action.quit(_M)
-    end, { buffer = bufnr })
-    vim.keymap.set('n', '<C-[>', function()
-        action.quit(_M)
-    end, { buffer = bufnr })
-    vim.keymap.set('t', '<C-u>', function()
-        action.preview_scroll_up(ctx)
-    end, { buffer = bufnr })
-    vim.keymap.set('t', '<C-d>', function()
-        action.preview_scroll_down(ctx)
-    end, { buffer = bufnr })
+    --- @param mode string
+    --- @return table
+    local get_provider_specific_binds = function(mode)
+        if not default_cfg.keymaps_cfg[ctx.name] then return {} end
+        return default_cfg.keymaps_cfg[ctx.name][mode] or {}
+    end
+
+    for mode, keymaps in pairs(default_cfg.keymaps_cfg.global) do
+        local binds = vim.tbl_extend("force", keymaps, get_provider_specific_binds(mode))
+        for key, bind in pairs(binds) do
+            vim.keymap.set(mode, key, function()
+                action[bind](ctx, _M)
+            end, { buffer = bufnr })
+        end
+    end
 end
 
+--- @param bufnr number
 local set_events = function(bufnr)
     local group = vim.api.nvim_create_augroup("ffmk_window_event", { clear = true })
     vim.api.nvim_create_autocmd("VimResized", {
@@ -500,7 +494,7 @@ _M.rpc_edit_or_send2qf = function(fc, args)
     kit.goto_winid(ctx.target_winid)
     local selected = table.remove(args, #args)
     if #selected == 0 then
-        action.quit(_M)
+        _M.release(true, true, true)
         return
     end
 
@@ -514,7 +508,7 @@ _M.rpc_edit_or_send2qf = function(fc, args)
         end
     end
 
-    action.quit(_M)
+    _M.release(true, true, true)
 end
 
 _M.rpc_preview = function(fc, args)

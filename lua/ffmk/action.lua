@@ -41,18 +41,24 @@ _M.toggle_preview = function(ctx, rt)
     end)
 end
 
+--- @param ctx table runtime_ctx
 --- @param rt table runtime_functions
-_M.quit = function(rt)
+_M.quit = function(ctx, rt)
+    local _ = ctx
     rt.release(true, true, true)
 end
 
 --- @param ctx table runtime_ctx
-_M.preview_scroll_up = function(ctx)
+--- @param rt table runtime_functions
+_M.preview_scroll_up = function(ctx, rt)
+    local _ = rt
     kit.scroll(ctx.preview_winid, true)
 end
 
 --- @param ctx table runtime_ctx
-_M.preview_scroll_down = function(ctx)
+--- @param rt table runtime_functions
+_M.preview_scroll_down = function(ctx, rt)
+    local _ = rt
     kit.scroll(ctx.preview_winid, false)
 end
 

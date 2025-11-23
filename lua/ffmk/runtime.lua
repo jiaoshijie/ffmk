@@ -222,7 +222,7 @@ local gen_grep_cmd = function(cfg)
     cmd = cfg.no_ignore and fmt("%s --no-ignore", cmd) or cmd
 
     -- options
-    cmd = cfg.smart_case and fmt("%s --smart-case", cmd) or cmd
+    cmd = cfg.smart_case and fmt("%s --smart-case", cmd) or fmt("%s --case-sensitive", cmd)
     cmd = cfg.fixed_string and fmt("%s -F", cmd) or cmd
     cmd = cfg.whole_word and fmt("%s -w", cmd) or cmd
 
@@ -231,9 +231,9 @@ local gen_grep_cmd = function(cfg)
         cmd = fmt("%s %s", cmd, table.concat(cfg.extra_options, ' '))
     end
 
-    cfg.query = vim.fn.shellescape(cfg.query, false)
     -- NOTE: -e: useful to protect querys starting with ´-´.
-    cmd = fmt([[%s -e %s | conv %d]], cmd, cfg.query, default_cfg.conv_fc.grep)
+    cmd = fmt([[%s -e %s | conv %d]], cmd, vim.fn.shellescape(cfg.query, false),
+                default_cfg.conv_fc.grep)
 
     return cmd
 end
@@ -408,7 +408,7 @@ rt_func_map.grep = function()
         cwd = ctx.cmd_cfg.cwd,
         prompt = ctx.cmd_cfg.prompt,
         query = ctx.query,
-        search = ctx.cmd_cfg.query,
+        search = vim.fn.shellescape(ctx.cmd_cfg.query, false),
         search_title = ui.gen_grep_title(ctx.cmd_cfg),
     })
 end
@@ -468,7 +468,7 @@ rt_func_map.gnu_global = function()
         cwd = ctx.cmd_cfg.cwd,
         prompt = ctx.cmd_cfg.prompt,
         query = ctx.query,
-        search = ctx.cmd_cfg.query,
+        search = vim.fn.shellescape(ctx.cmd_cfg.query, false),
         search_title = ui.gen_gnu_global_title(ctx.cmd_cfg),
     })
 end

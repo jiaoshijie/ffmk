@@ -165,8 +165,17 @@ _M.keymaps_cfg = {
             ["<A-h>"] = "toggle_hidden",
             ["<A-i>"] = "toggle_no_ignore",
             ["<A-f>"] = "toggle_follow",
+            ["<A-c>"] = "toggle_grep_case",
+            ["<A-w>"] = "toggle_grep_whole_word",
+            ["<A-F>"] = "toggle_grep_fixed_string",
         },
     },
+    gnu_global = {
+        ["t"] = {
+            ["<A-c>"] = "toggle_gnu_global_case",
+            ["<A-F>"] = "toggle_gnu_global_fixed_string",
+        },
+    }
 }
 
 _M.cmd_cfg = {
@@ -191,7 +200,7 @@ _M.cmd_cfg = {
         -- options
         whole_word = false,  -- [w]
         fixed_string = false,  -- [F]
-        smart_case = true,   -- [S]
+        smart_case = true,   -- true: [S], false: [s]
         -- extra options
         extra_options = nil,  -- should be a table
     },

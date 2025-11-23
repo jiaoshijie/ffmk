@@ -99,7 +99,7 @@ end
 _M.gen_grep_title = function(cfg)
     local flag = ""
 
-    flag = cfg.smart_case and flag .. 'S' or flag
+    flag = cfg.smart_case and flag .. 'S' or flag .. 's'
     flag = cfg.fixed_string and flag .. 'F' or flag
     flag = cfg.whole_word and flag .. 'w' or flag
 

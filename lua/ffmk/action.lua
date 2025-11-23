@@ -30,6 +30,51 @@ end
 
 --- @param ctx table runtime_ctx
 --- @param rt table runtime_functions
+_M.toggle_grep_whole_word = function(ctx, rt)
+    ctx.cmd_cfg.whole_word = not ctx.cmd_cfg.whole_word
+    rt.release(false, true, false)
+
+    rt.run()
+end
+
+--- @param ctx table runtime_ctx
+--- @param rt table runtime_functions
+_M.toggle_grep_fixed_string = function(ctx, rt)
+    ctx.cmd_cfg.fixed_string = not ctx.cmd_cfg.fixed_string
+    rt.release(false, true, false)
+
+    rt.run()
+end
+
+--- @param ctx table runtime_ctx
+--- @param rt table runtime_functions
+_M.toggle_grep_case = function(ctx, rt)
+    ctx.cmd_cfg.smart_case = not ctx.cmd_cfg.smart_case
+    rt.release(false, true, false)
+
+    rt.run()
+end
+
+--- @param ctx table runtime_ctx
+--- @param rt table runtime_functions
+_M.toggle_gnu_global_case = function(ctx, rt)
+    ctx.cmd_cfg.ignore_case = not ctx.cmd_cfg.ignore_case
+    rt.release(false, true, false)
+
+    rt.run()
+end
+
+--- @param ctx table runtime_ctx
+--- @param rt table runtime_functions
+_M.toggle_gnu_global_fixed_string = function(ctx, rt)
+    ctx.cmd_cfg.fixed_string = not ctx.cmd_cfg.fixed_string
+    rt.release(false, true, false)
+
+    rt.run()
+end
+
+--- @param ctx table runtime_ctx
+--- @param rt table runtime_functions
 _M.toggle_preview = function(ctx, rt)
     ctx.ui_cfg.preview = not ctx.ui_cfg.preview
     vim.schedule(function()

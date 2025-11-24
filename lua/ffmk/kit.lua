@@ -150,7 +150,7 @@ _M.set_win_cursor_pos = function(winid, loc)
         if not winid then return end
         vim.api.nvim_win_call(winid, function()
             vim.api.nvim_win_set_cursor(winid, { 1,  0, })
-            if vim.fn.search("\\V" .. loc.helptag.pattern, 'w') == 0 then
+            if vim.fn.search("\\V" .. loc.helptag.pattern, 'W') == 0 then
                 _M.echo_err_msg(fmt("helptag `%s` not found", loc.helptag.pattern))
             end
         end)

@@ -142,16 +142,17 @@ _M.abs_path = function(cwd, path)
 end
 
 --- @param winid number
---- @param bufnr number?
 --- @param loc Loc
-_M.set_win_cursor_pos = function(winid, bufnr, loc)
+_M.set_win_cursor_pos = function(winid, loc)
     if loc.row then
         vim.api.nvim_win_set_cursor(winid, { loc.row, loc.col or 0, })
     elseif loc.helptag then
-        if not bufnr then return end
-        vim.api.nvim_buf_call(bufnr, function()
+        if not winid then return end
+        vim.api.nvim_win_call(winid, function()
             vim.api.nvim_win_set_cursor(winid, { 1,  0, })
-            vim.fn.search("\\V" .. loc.helptag.pattern, 'W')
+            if vim.fn.search("\\V" .. loc.helptag.pattern, 'w') == 0 then
+                _M.echo_err_msg(fmt("helptag `%s` not found", loc.helptag.pattern))
+            end
         end)
     else
         return
@@ -194,7 +195,7 @@ _M.edit = function(loc)
     end
     if not loc.helptag then
         vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
-        _M.set_win_cursor_pos(0, nil, loc)
+        _M.set_win_cursor_pos(0, loc)
     else
         local rtp = vim.fn.fnamemodify(loc.path, ":p:h:h")
         if vim.fn.stridx(vim.o.runtimepath, rtp) < 0 then

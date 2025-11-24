@@ -102,7 +102,7 @@ static void helptags(char **argv) {
 
     char *tag_path = NULL, tag_dir[MAX_PATH_LEN] = { 0 };
     char item[8192] = { 0 }, *tag, *filename, *pattern;
-    char filepath[MAX_PATH_LEN] = { 0 };
+    char filepath[MAX_PATH_LEN + 1024] = { 0 }; // get rid of -Wformat-overflow warning
     log_infof("------------ [%s] ------------", __func__);
     while (*argv) {
         tag_path = *(argv++);

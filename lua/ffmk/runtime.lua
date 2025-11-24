@@ -452,7 +452,7 @@ rt_func_map.gnu_global = function()
     -- NOTE: if there is only one definition, directly jump to it
     if ctx.cmd_cfg.auto_jump_definition
         and ctx.cmd_cfg.feat == default_cfg.gnu_global_feats.definition
-        and kit.gnu_global_definition(cmd, ctx.cmd_cfg.cwd, ctx.winid) then
+        and kit.gnu_global_definition(cmd, ctx.cmd_cfg.cwd, ctx.target_winid) then
         _M.release(true, true, true)
         return
     end

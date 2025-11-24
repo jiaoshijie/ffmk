@@ -19,7 +19,7 @@ It's a simple fzf wrapper for neovim.
 vim.api.nvim_create_user_command("Ctags", function()
     require('ffmk').ctags({
         ui = { preview = true },
-        cmd = { options = { "--kinds-c=-e" } },
+        cmd = { options = { "--kinds-c=-e-m" } },
     })
 end, { nargs = 0 })
 ```
@@ -31,10 +31,6 @@ vim.api.nvim_create_user_command("Gtagsd", function(opts)
     local query = opts.args
     if #query == 0 then
         query = vim.fn.expand("<cword>")
-        if #query == 0 then
-            print("WARNING: No query provided")
-            return
-        end
     end
 
     require('ffmk').gnu_global({

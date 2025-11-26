@@ -8,8 +8,8 @@ It's a simple fzf wrapper for neovim.
 
 ## TODO
 
-- [ ] gnu_global
-  + get all the symbols from the database(using `global -cd`), ff the symbols, when hit enter, call goto definition using the selected symbol
+- [x] gnu_global
+  + ~~get all the symbols from the database(using `global -cd`), ff the symbols, when hit enter, call goto definition using the selected symbol~~ **using neovim's builtin matchfuzzy instead**
 - [ ] lsp
   + `lsp_docmuent_symbols` filters only useful symbols (function definitions, methods, global variables) only for current buffer
 
@@ -45,7 +45,10 @@ vim.api.nvim_create_user_command("Gtagsd", function(opts)
 end, {
     nargs = '?',
     complete = function(lead, _, _)
-        return vim.fn.systemlist("global -cd " .. lead)
+        if lead == "" then
+            return vim.fn.systemlist("global -cd")
+        end
+        return vim.fn.matchfuzzy(vim.fn.systemlist("global -cd"), lead)
     end
 })
 

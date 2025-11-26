@@ -8,6 +8,8 @@ It's a simple fzf wrapper for neovim.
 
 ## TODO
 
+- [ ] gnu_global
+  + get all the symbols from the database(using `global -cd`), ff the symbols, when hit enter, call goto definition using the selected symbol
 - [ ] lsp
   + `lsp_docmuent_symbols` filters only useful symbols (function definitions, methods, global variables) only for current buffer
 

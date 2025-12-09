@@ -8,6 +8,7 @@ It's a simple fzf wrapper for neovim.
 
 ## TODO
 
+- [ ] Releasing runtime_ctx noticeably blocks the UI when many preview buffers exist(>500).
 - [ ] lsp
   + `lsp_docmuent_symbols` filters only useful symbols (function definitions, methods, global variables) only for current buffer
 

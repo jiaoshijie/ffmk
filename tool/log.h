@@ -2,6 +2,8 @@
 #define FFMK_LOG_H
 #include <stdbool.h>
 
+void impl_print(bool is_err, const char *fmt, ...);
+
 #ifdef FFMK_DUMP_LOG
 #define log_info(msg) \
     impl_print(false, "[INFO] %s:%d: "msg"\n", __FILE__, __LINE__)

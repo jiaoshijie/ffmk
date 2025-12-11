@@ -123,9 +123,10 @@ static void packet_vec_append_arr_header(size_t len) {
 
 // only dump at most PACKET_RECV_BUF_LEN byte
 static const char *hexdump_packet(uint8_t *buf, size_t len) {
-    static char dump_buf[PACKET_RECV_BUF_LEN * 2] = { 0 };
+    static char dump_buf[PACKET_RECV_BUF_LEN * 2 + 1] = { 0 };
 
-    for (size_t i = 0; i < len; i++) {
+    size_t end = len < PACKET_RECV_BUF_LEN * 2 ? len : PACKET_RECV_BUF_LEN * 2;
+    for (size_t i = 0; i < end; i++) {
         sprintf(dump_buf + i * 2, "%02x", buf[i]);
     }
 

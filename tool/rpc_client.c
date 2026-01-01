@@ -134,7 +134,7 @@ static const char *hexdump_packet(uint8_t *buf, size_t len) {
 }
 
 static bool check_success(uint8_t *buf, size_t len) {
-    uint8_t success_msg[] = {
+    const uint8_t success_msg[] = {
         [0] = 0x94,
         [1] = 0x01,
         [2] = SEND_MSGID,

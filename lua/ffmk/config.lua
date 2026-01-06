@@ -82,7 +82,7 @@ _M.fzf_cfg = {
         },
         bind = {
             fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.files_enter),
-            fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.files_preview),
+            fmt("focus:execute-silent(rpc_client %d {} {n} {q})", _M.rpc_fc.files_preview),
         },
     },
     grep = {
@@ -92,7 +92,7 @@ _M.fzf_cfg = {
         bind = {
             fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_enter),
             fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.grep_send2qf),
-            fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_preview),
+            fmt("focus:execute-silent(rpc_client %d {} {n} {q})", _M.rpc_fc.grep_preview),
         },
     },
     helptags = {
@@ -105,7 +105,7 @@ _M.fzf_cfg = {
         },
         bind = {
             fmt("enter:execute-silent(rpc_client %d {1..3} {n})", _M.rpc_fc.helptags_enter),
-            fmt("focus:execute-silent(rpc_client %d {1..3} {n})", _M.rpc_fc.helptags_preview),
+            fmt("focus:execute-silent(rpc_client %d {1..3} {n} {q})", _M.rpc_fc.helptags_preview),
         },
     },
     ctags = {
@@ -118,7 +118,7 @@ _M.fzf_cfg = {
         bind = {
             fmt("enter:execute-silent(rpc_client %d {1} {n})", _M.rpc_fc.ctags_enter),
             fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.ctags_send2qf),
-            fmt("focus:execute-silent(rpc_client %d {1} {n})", _M.rpc_fc.ctags_preview),
+            fmt("focus:execute-silent(rpc_client %d {1} {n} {q})", _M.rpc_fc.ctags_preview),
         },
     },
     gnu_global = {
@@ -128,7 +128,7 @@ _M.fzf_cfg = {
         bind = {
             fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.gnu_global_enter),
             fmt("alt-q:execute-silent(rpc_client %d {+} {n})", _M.rpc_fc.gnu_global_send2qf),
-            fmt("focus:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.gnu_global_preview),
+            fmt("focus:execute-silent(rpc_client %d {} {n} {q})", _M.rpc_fc.gnu_global_preview),
         },
     },
 }

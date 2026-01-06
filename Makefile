@@ -11,7 +11,7 @@ tool: bin/conv bin/rpc_client
 help:
 	@echo -e 'Usage:'
 	@echo -e '\t`make -B`: only report error message'
-	@echo -e '\t`CFLAGS="-DFFMK_DUMP_LOG" make -B`: dump all messages'
+	@echo -e '\t`CPPFLAGS="-DFFMK_DUMP_LOG" make -B`: dump all messages'
 
 check_length:
 	@echo "The maximum file name length is $(MAX_FILENAME_LEN)"

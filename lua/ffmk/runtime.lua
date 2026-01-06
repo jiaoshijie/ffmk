@@ -605,6 +605,11 @@ _M.rpc_edit_or_send2qf = function(fc, args)
 end
 
 _M.rpc_preview = function(fc, args)
+    -- NOTE: remove the query from the arguments.
+    -- query is not used in the preview, it exists only to refresh
+    -- the preview window when there is not item in fzf.
+    local _ = table.remove(args, #args)
+
     local selected = table.remove(args, #args)
     if #selected == 0 then
         ctx.loc = nil

@@ -256,12 +256,18 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
             local ft = nil
             if syntax then ft = vim.filetype.match({ buf = bufnr, filename = filename }) end
             if ft then
+                -- TODO: Do not know if there is a better to do the highlighting with no delay
+                -- 1. If the filetype is set directly, there is sometimes a noticeable delay when scrolling through files. It may be acceptable, but I don't like it.
+                -- 2. Using defer_fn reduces the delay a lot. However, another issue arises: when first opening Neovim and using ffmk with preview,
+                --    sometimes the FZF terminal window rendering is weird. Since this only happens once per neovim session and doesn’t always occur, I prefer this one.
+                --    When this happens, pressing <ESC> to return to Normal mode, then pressing A to go back to Insert mode will fix this issue.
                 vim.defer_fn(function()
                     if vim.api.nvim_buf_is_valid(bufnr)
                         and vim.api.nvim_buf_is_loaded(bufnr) then
                         pcall(vim.api.nvim_set_option_value, 'filetype', ft, { buf = bufnr })
                     end
                 end, 20)
+                -- vim.api.nvim_set_option_value('filetype', ft, { buf = bufnr })
             end
         end))
     else

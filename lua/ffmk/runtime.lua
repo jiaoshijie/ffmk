@@ -165,18 +165,34 @@ _M.release = function(exit, main, preview)
         ctx.query = nil
         ctx.loc = nil
 
-        -- NOTE: defer the deletion of the preview buf list a little bit
-        -- then it will not block the ui
-        local bufs = ctx.preview_bufs
+        -- NOTE: using coroutine and defer_fn togather to clear the preview buf list
+        local bufs = ctx.preview_bufs  -- move the ownership
         ctx.preview_bufs = nil
-        if bufs then
-            vim.defer_fn(function()
-                for _, bufnr in pairs(bufs) do
-                    kit.buf_delete(bufnr)
-                end
-            end, 1)
-        end
+        local delete_preview_bufs_co = coroutine.create(function(resume_callback)
+            if not bufs then return end
 
+            local count = 0;
+            for _, bufnr in pairs(bufs) do
+                kit.buf_delete(bufnr)
+                count = count + 1
+                -- clear 25 bufs at once
+                if count == 25 then
+                    count = 0
+                    resume_callback()
+                    coroutine.yield()
+                end
+            end
+        end)
+        --- The first resume, which has no corresponding yield waiting for it,
+        --- passes its extra arguments as arguments to the coroutine main function.
+        ---                                              9.1 – Coroutine Basics
+        coroutine.resume(delete_preview_bufs_co, function()
+            vim.defer_fn(function()
+                -- NOTE: The logic is straightforward,
+                -- so checking the coroutine status is unnecessary.
+                coroutine.resume(delete_preview_bufs_co)
+            end, 10)
+        end)
     end
 end
 

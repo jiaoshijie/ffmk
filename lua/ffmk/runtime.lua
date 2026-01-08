@@ -191,7 +191,7 @@ _M.release = function(exit, main, preview)
                 -- NOTE: The logic is straightforward,
                 -- so checking the coroutine status is unnecessary.
                 coroutine.resume(delete_preview_bufs_co)
-            end, 10)
+            end, 50)
         end)
     end
 end

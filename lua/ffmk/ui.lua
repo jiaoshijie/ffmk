@@ -262,8 +262,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
                 --    sometimes the FZF terminal window rendering is weird. Since this only happens once per neovim session and doesn’t always occur, I prefer this one.
                 --    When this happens, pressing <ESC> to return to Normal mode, then pressing A to go back to Insert mode will fix this issue.
                 vim.defer_fn(function()
-                    if vim.api.nvim_buf_is_valid(bufnr)
-                        and vim.api.nvim_buf_is_loaded(bufnr) then
+                    if vim.api.nvim_buf_is_loaded(bufnr) then
                         pcall(vim.api.nvim_set_option_value, 'filetype', ft, { buf = bufnr })
                     end
                 end, 20)

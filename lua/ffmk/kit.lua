@@ -62,8 +62,7 @@ end
 
 --- @param bufnr number
 _M.buf_delete = function(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr)
-      or not vim.api.nvim_buf_is_loaded(bufnr) then
+  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
       return
   end
 
@@ -181,8 +180,7 @@ _M.clear_highlighted_cursor = function(ns)
         ns = vim.api.nvim_create_namespace("ffmk_ui_preview_cursor_ns")
     end
 
-    if g_last_bufnr and vim.api.nvim_buf_is_valid(g_last_bufnr)
-        and vim.api.nvim_buf_is_loaded(g_last_bufnr) then
+    if g_last_bufnr and vim.api.nvim_buf_is_loaded(g_last_bufnr) then
         vim.api.nvim_buf_clear_namespace(g_last_bufnr, ns, 0, -1)
     end
 end

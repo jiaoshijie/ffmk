@@ -207,14 +207,22 @@ end
 
 --- @param prefer_winid number?
 _M.goto_winid = function(prefer_winid)
-    if prefer_winid and vim.api.nvim_win_is_valid(prefer_winid) then
+    if prefer_winid and vim.api.nvim_win_is_valid(prefer_winid)
+        and not vim.api.nvim_get_option_value('winfixbuf', { win = prefer_winid }) then
         vim.fn.win_gotoid(prefer_winid)
-    else
-        -- NOTE: As the windows created by this plugin are all floating windows,
-        -- there must be a valid normal window in the grid
-        -- TODO(goto_winid): check `winfixbuf` option
-        vim.fn.win_gotoid(vim.fn.win_getid(1))
+        return
     end
+
+    -- NOTE: As the windows created by this plugin are all floating windows,
+    -- there must be a valid normal window in the grid
+    local winid = vim.fn.win_getid(1)
+
+    if not vim.api.nvim_get_option_value('winfixbuf', { win = winid }) then
+        vim.fn.win_gotoid(winid)
+        return
+    end
+
+    vim.cmd("silent keepalt vertical split")
 end
 
 --- @param cmd string

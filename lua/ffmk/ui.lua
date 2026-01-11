@@ -130,7 +130,6 @@ local set_win_opts = function(winid, warn_win)
 
     vim.api.nvim_set_option_value('relativenumber', false, { win = winid })
     vim.api.nvim_set_option_value('wrap', false, { win = winid })
-    vim.api.nvim_set_option_value('wrap', false, { win = winid })
     vim.api.nvim_set_option_value('spell', false, { win = winid })
     vim.api.nvim_set_option_value('signcolumn', 'no', { win = winid })
     vim.api.nvim_set_option_value('colorcolumn', '0', { win = winid })

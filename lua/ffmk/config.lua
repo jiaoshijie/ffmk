@@ -235,7 +235,7 @@ _M.cmd_cfg = {
 --- @param cfg table  { ui = {}, cmd = { files = {} } }
 _M.setup = function(cfg)
     _M.ui_cfg = vim.tbl_extend('force', _M.ui_cfg, cfg.ui or {})
-    _M.cmd_cfg = vim.tbl_extend('force', _M.cmd_cfg, cfg.cmd or {})
+    _M.cmd_cfg = vim.tbl_deep_extend('force', _M.cmd_cfg, cfg.cmd or {})
 end
 
 return _M

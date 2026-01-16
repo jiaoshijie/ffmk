@@ -195,14 +195,18 @@ end
 --- @param ctx table runtime_ctx
 --- @param bufnr number
 --- @param text string
-local update_preview_warn = function(ctx, bufnr, text)
+--- @param filename string?
+local update_preview_warn = function(ctx, bufnr, text, filename)
     if bufnr ~= ctx.preview_bufs['ffmk'] then
         return
     end
 
     local ns = vim.api.nvim_create_namespace("ffmk_ui_preview_ns")
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { text })
-    vim.api.nvim_win_set_config(ctx.preview_winid, { title = "" })
+    vim.api.nvim_win_set_config(ctx.preview_winid, {
+        title = filename and fmt(" %s ", filename) or "",
+        title_pos = "center"
+    })
     nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
     vim.hl.range(bufnr, ns, "FFMKWarnMsg", { 0, 0 }, { 0, -1 })
     vim.schedule(function()
@@ -215,7 +219,8 @@ end
 --- @param loc Loc
 --- @param loaded_buf boolean
 --- @param syntax boolean
-local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
+--- @param filename string
+local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax, filename)
     assert(loc ~= nil and loc.path ~= nil)
     if bufnr == ctx.preview_bufs['ffmk'] then
         return
@@ -228,7 +233,6 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax)
         return
     end
 
-    local filename = vim.fn.fnamemodify(loc.path, ':t')
     vim.api.nvim_win_set_config(ctx.preview_winid, { title = fmt(" %s ", filename), title_pos = "center" })
     nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
 
@@ -285,19 +289,20 @@ _M.preview = function(ctx, loc)
         return
     end
 
+    local filename = vim.fn.fnamemodify(loc.path, ':t')
     local st = vim.uv.fs_stat(loc.path)
     if not st then
-        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Stat Failed ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Stat Failed ", filename)
         return
     end
 
     if st.size == 0 then
-        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Empty File ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Empty File ", filename)
         return
     end
 
     if kit.is_binary(loc.path) then
-        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Binary File ", filename)
         return
     end
 
@@ -305,7 +310,7 @@ _M.preview = function(ctx, loc)
     local loaded = bufnr ~= -1
 
     if not loaded and st.size > 5 * 1024 * 1024 then  -- 5M
-        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Big File ")
+        update_preview_warn(ctx, ctx.preview_bufs['ffmk'], " Big File ", filename)
         return
     end
 
@@ -317,7 +322,7 @@ _M.preview = function(ctx, loc)
         ctx.preview_bufs[loc.path] = bufnr
     end
 
-    update_preview(ctx, bufnr, loc, loaded, st.size < 512 * 1024)  -- 512K
+    update_preview(ctx, bufnr, loc, loaded, st.size < 512 * 1024, filename)  -- 512K
 end
 
 return _M

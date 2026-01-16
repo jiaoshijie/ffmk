@@ -84,6 +84,11 @@ _M.run = function(ctx)
             ["FFMK_LOG_DIR"] = vim.fn.stdpath("log") .. "/ffmk",  -- log.h
             ["FFMK_RPC_UNIX_SOCKET"] = vim.v.servername,  -- rpc_client.c
 
+            -- `man 7 locale`
+            ["LANG"] = "C",
+            ["LC_ALL"] = "C",
+            ["USER"] = vim.env.USER,
+            ["HOME"] = vim.env.HOME,
             ["PATH"] = fmt("%s/../../bin:%s", script_dir, vim.env.PATH),
             ["SHELL"] = vim.o.shell,
             ["FZF_DEFAULT_COMMAND"] = ctx.cmd,

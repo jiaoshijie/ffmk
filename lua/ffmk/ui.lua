@@ -224,11 +224,12 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax, filename)
     if bufnr == ctx.preview_bufs['ffmk'] then
         return
     end
+    local ns = ctx.env_weak_ref.ns.preview_cursor_ns
 
     local curbuf = vim.api.nvim_win_get_buf(ctx.preview_winid)
     if curbuf == bufnr then
         kit.set_win_cursor_pos(ctx.preview_winid, loc)
-        kit.highlight_cursor(bufnr, loc)
+        kit.highlight_cursor(ns, bufnr, loc)
         return
     end
 
@@ -247,7 +248,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax, filename)
             vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
             set_win_opts(ctx.preview_winid, false)
             kit.set_win_cursor_pos(ctx.preview_winid, loc)
-            kit.highlight_cursor(bufnr, loc)
+            kit.highlight_cursor(ns, bufnr, loc)
 
 
             if loc.ft then
@@ -276,7 +277,7 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax, filename)
             set_win_opts(ctx.preview_winid, false)
         end)
         kit.set_win_cursor_pos(ctx.preview_winid, loc)
-        kit.highlight_cursor(bufnr, loc)
+        kit.highlight_cursor(ns, bufnr, loc)
     end
 end
 

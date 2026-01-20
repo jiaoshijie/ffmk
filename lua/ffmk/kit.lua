@@ -6,9 +6,9 @@ _M.echo_err_msg = function(msg)
     vim.api.nvim_echo({ { fmt("ffmk: %s", msg) } }, true, { err = true })
 end
 
---- @return number? major
---- @return number? minor
---- @return number? patch
+--- @return integer? major
+--- @return integer? minor
+--- @return integer? patch
 _M.get_cmd_version = function(cmd, ver_flag)
     if vim.fn.executable(cmd) ~= 1 then
         return nil, nil, nil
@@ -60,7 +60,7 @@ _M.is_binary = function(path)
     return vim.v.shell_error ~= 0
 end
 
---- @param bufnr number
+--- @param bufnr integer
 _M.buf_delete = function(bufnr)
   if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
       return
@@ -75,7 +75,7 @@ _M.buf_delete = function(bufnr)
   vim.o.report = start_report
 end
 
---- @param win_id number
+--- @param win_id integer
 --- @param force boolean see :h nvim_win_close
 _M.win_delete = function(win_id, force)
   if not win_id or not vim.api.nvim_win_is_valid(win_id) then
@@ -111,7 +111,7 @@ _M.read_file_async = function(path, cb)
   end)
 end
 
---- @param winid number
+--- @param winid integer
 --- @param up boolean  -- true: up,false: down
 _M.scroll = function(winid, up)
     if not winid or not vim.api.nvim_win_is_valid(winid) then
@@ -140,7 +140,7 @@ _M.abs_path = function(cwd, path)
     return path
 end
 
---- @param winid number
+--- @param winid integer
 --- @param loc Loc
 _M.set_win_cursor_pos = function(winid, loc)
     if loc.row then
@@ -162,11 +162,12 @@ _M.set_win_cursor_pos = function(winid, loc)
 end
 
 local g_last_bufnr = nil
---- @param bufnr number
+--- @param ns integer
+--- @param bufnr integer
 --- @param loc Loc
-_M.highlight_cursor = function(bufnr, loc)
-    local ns = vim.api.nvim_create_namespace("ffmk_ui_preview_cursor_ns")
-    _M.clear_highlighted_cursor()
+_M.highlight_cursor = function(ns, bufnr, loc)
+    assert(ns ~= nil)
+    _M.clear_highlighted_cursor(ns)
     g_last_bufnr = bufnr
     if loc.row and loc.col then
         vim.hl.range(bufnr, ns, "FFMKPreviewCursor", { loc.row - 1, loc.col },
@@ -175,11 +176,9 @@ _M.highlight_cursor = function(bufnr, loc)
         return
     end
 end
+--- @param ns integer
 _M.clear_highlighted_cursor = function(ns)
-    if not ns then
-        ns = vim.api.nvim_create_namespace("ffmk_ui_preview_cursor_ns")
-    end
-
+    assert(ns ~= nil)
     if g_last_bufnr and vim.api.nvim_buf_is_loaded(g_last_bufnr) then
         vim.api.nvim_buf_clear_namespace(g_last_bufnr, ns, 0, -1)
     end
@@ -205,7 +204,7 @@ _M.edit = function(loc)
     end
 end
 
---- @param prefer_winid number?
+--- @param prefer_winid integer?
 _M.goto_winid = function(prefer_winid)
     if prefer_winid and vim.api.nvim_win_is_valid(prefer_winid)
         and not vim.api.nvim_get_option_value('winfixbuf', { win = prefer_winid }) then
@@ -227,7 +226,7 @@ end
 
 --- @param cmd string
 --- @param cwd string?
---- @param winid number
+--- @param winid integer
 --- @return boolean
 _M.gnu_global_definition = function(cmd, cwd, winid)
     local res = vim.fn.systemlist(vim.split(cmd, '|')[1])

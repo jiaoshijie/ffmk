@@ -119,7 +119,7 @@ _M.gen_gnu_global_title = function(cfg)
     return #flag > 0 and fmt("Pattern(%s)", flag) or "Pattern"
 end
 
---- @param winid number
+--- @param winid integer
 --- @param warn_win boolean enabled cursorline or not
 local set_win_opts = function(winid, warn_win)
     if not warn_win then
@@ -193,7 +193,7 @@ local nvim_win_set_buf_noautocmd = function(winid, bufnr)
 end
 
 --- @param ctx table runtime_ctx
---- @param bufnr number
+--- @param bufnr integer
 --- @param text string
 --- @param filename string?
 local update_preview_warn = function(ctx, bufnr, text, filename)
@@ -201,21 +201,20 @@ local update_preview_warn = function(ctx, bufnr, text, filename)
         return
     end
 
-    local ns = vim.api.nvim_create_namespace("ffmk_ui_preview_ns")
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, { text })
     vim.api.nvim_win_set_config(ctx.preview_winid, {
         title = filename and fmt(" %s ", filename) or "",
         title_pos = "center"
     })
     nvim_win_set_buf_noautocmd(ctx.preview_winid, bufnr)
-    vim.hl.range(bufnr, ns, "FFMKWarnMsg", { 0, 0 }, { 0, -1 })
+    vim.hl.range(bufnr, ctx.env_weak_ref.ns.preview_ns, "FFMKWarnMsg", { 0, 0 }, { 0, -1 })
     vim.schedule(function()
         set_win_opts(ctx.preview_winid, true)
     end)
 end
 
 --- @param ctx table runtime_ctx
---- @param bufnr number
+--- @param bufnr integer
 --- @param loc Loc
 --- @param loaded_buf boolean
 --- @param syntax boolean

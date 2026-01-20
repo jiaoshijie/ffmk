@@ -8,21 +8,23 @@ local action = require('ffmk.action')
 
 --- @class Loc
 --- @field path string?
---- @field row number?
---- @field col number?
+--- @field row integer?
+--- @field col integer?
 --- @field helptag table?  { tag = "", pattern = "" }
 --- @field ft string? filetype
 
 --- @class QfLoc
 --- @field filename string
---- @field lnum number
---- @field col number?
+--- @field lnum integer
+--- @field col integer?
 --- @field text string
 
 -- { fzf, rg, fd, ctags, gnu_global }
-local rt_env = {}
+local rt_env = { ns = { preview_ns = nil, preview_cursor_ns = nil } }
 
 local ctx = {
+    env_weak_ref = nil,
+
     target_winid = nil,
     query = nil,
     loc = nil,  --- @type Loc
@@ -105,6 +107,13 @@ local validate_env = function(tools)
         return false
     end
 
+    if not rt_env.ns.preview_ns then
+        rt_env.ns.preview_ns = vim.api.nvim_create_namespace("ffmk_ui_preview_ns")
+    end
+    if not rt_env.ns.preview_cursor_ns then
+        rt_env.ns.preview_cursor_ns = vim.api.nvim_create_namespace("ffmk_ui_preview_cursor_ns")
+    end
+
     return true
 end
 
@@ -131,6 +140,8 @@ _M.setup = function(name, cfg, tools)
     if not validate_env(tools) then
         return false
     end
+    ctx.env_weak_ref = rt_env
+
     set_target_winid()
     config_ui_cfg(cfg and cfg.ui)
     config_cmd_cfg(name, cfg and cfg.cmd)
@@ -144,7 +155,7 @@ _M.run = function()
 end
 
 _M.release = function(exit, main, preview)
-    kit.clear_highlighted_cursor()
+    kit.clear_highlighted_cursor(rt_env.ns.preview_cursor_ns)
     if main then
         kit.win_delete(ctx.winid, true)
         kit.buf_delete(ctx.bufnr)
@@ -158,6 +169,7 @@ _M.release = function(exit, main, preview)
     end
 
     if exit then
+        ctx.env_weak_ref = nil
         ctx.target_winid = nil
         ctx.name = nil
         ctx.ui_cfg = nil
@@ -343,7 +355,7 @@ local gen_gnu_global_cmd = function(cfg)
     return cmd
 end
 
---- @param bufnr number
+--- @param bufnr integer
 local set_keymaps = function(bufnr)
     --- @param mode string
     --- @return table
@@ -362,7 +374,7 @@ local set_keymaps = function(bufnr)
     end
 end
 
---- @param bufnr number
+--- @param bufnr integer
 local set_events = function(bufnr)
     local group = vim.api.nvim_create_augroup("ffmk_window_event", { clear = true })
     vim.api.nvim_create_autocmd("VimResized", {
@@ -491,7 +503,7 @@ end
 
 ---------------------------------- rpc ---------------------------------------
 
---- @param fc number
+--- @param fc integer
 --- @param arg string
 --- @return Loc
 local get_loc_from_fc = function(fc, arg)
@@ -539,7 +551,7 @@ local get_loc_from_fc = function(fc, arg)
     }
 end
 
---- @param fc number
+--- @param fc integer
 --- @param arg table
 --- @return QfLoc[]
 local get_qfloc_from_fc = function(fc, arg)
@@ -583,21 +595,21 @@ local get_qfloc_from_fc = function(fc, arg)
     return qflist
 end
 
---- @param fc number
+--- @param fc integer
 --- @param args table
 _M.rpc_quit = function(fc, args)
     local _, _ = fc, args
     _M.release(true, true, true)
 end
 
---- @param fc number
+--- @param fc integer
 --- @param args table
 _M.rpc_query = function(fc, args)
     local _ = fc
     ctx.query = args[1]
 end
 
---- @param fc number
+--- @param fc integer
 --- @param args table
 _M.rpc_edit_or_send2qf = function(fc, args)
     kit.goto_winid(ctx.target_winid)

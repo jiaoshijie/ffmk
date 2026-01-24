@@ -191,7 +191,12 @@ _M.edit = function(loc)
         return
     end
     if not loc.helptag then
-        vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
+        local bufnr = vim.fn.bufnr(loc.path)
+        if vim.api.nvim_buf_is_loaded(bufnr) then
+            vim.cmd('buffer ' .. bufnr)
+        else
+            vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
+        end
         _M.set_win_cursor_pos(0, loc)
     else
         local rtp = vim.fn.fnamemodify(loc.path, ":p:h:h")

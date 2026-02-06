@@ -88,6 +88,7 @@ _M.fzf_cfg = {
     grep = {
         opt = {
             ["--multi"] = true,
+            ["--gap"] = true,
         },
         bind = {
             fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.grep_enter),
@@ -124,6 +125,7 @@ _M.fzf_cfg = {
     gnu_global = {
         opt = {
             ["--multi"] = true,
+            ["--gap"] = true,
         },
         bind = {
             fmt("enter:execute-silent(rpc_client %d {} {n})", _M.rpc_fc.gnu_global_enter),

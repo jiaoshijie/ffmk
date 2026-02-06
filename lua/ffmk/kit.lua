@@ -193,7 +193,11 @@ _M.edit = function(loc)
     if not loc.helptag then
         local bufnr = vim.fn.bufnr(loc.path)
         if vim.api.nvim_buf_is_loaded(bufnr) then
-            vim.cmd('buffer ' .. bufnr)
+            if bufnr == vim.api.nvim_get_current_buf() then
+                vim.cmd([[normal! m']])  -- set jumplist
+            else
+                vim.cmd('buffer ' .. bufnr)
+            end
         else
             vim.cmd('edit ' .. vim.fn.fnameescape(loc.path))
         end

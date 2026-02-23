@@ -53,7 +53,8 @@ local gen_fzf_opts = function(ctx)
     opts = fmt("%s %s", opts, fzf_cfg.preview)
     sub = fzf_cfg[ctx.name] and fzf_cfg[ctx.name].preview
     if sub then
-        opts = fmt("%s %s", opts, fzf_cfg.preview)
+        -- this is replaced by `focus` event
+        opts = fmt("%s %s", opts, fzf_cfg[ctx.name].preview)
     end
 
     -- 6. query

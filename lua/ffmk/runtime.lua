@@ -334,14 +334,14 @@ local gen_gnu_global_cmd = function(cfg)
     local cmd = "global -q -F --color=always --result=ctags-mod --path-style=relative"
 
     if cfg.conf then
-        cmd = fmt("%s --gtagsconf %s", vim.fn.shellescape(cfg.conf, false))
+        cmd = fmt("%s --gtagsconf %s", cmd, vim.fn.shellescape(cfg.conf, false))
     end
     if cfg.label then
-        cmd = fmt("%s --gtagslabel %s", vim.fn.shellescape(cfg.label, false))
+        cmd = fmt("%s --gtagslabel %s", cmd, vim.fn.shellescape(cfg.label, false))
     end
 
     if cfg.cwd then
-        cmd = fmt("%s -C %s", vim.fn.shellescape(cfg.cwd, false))
+        cmd = fmt("%s -C %s", cmd, vim.fn.shellescape(cfg.cwd, false))
     end
 
     if not isfile then
@@ -584,7 +584,7 @@ local get_qfloc_from_fc = function(fc, arg)
             filename = string.sub(val, 1, b - 1)
             lnum, text = string.match(string.sub(val, e + 1), ":(%d+):(.+)")
             table.insert(qflist, {
-                filename = ctx.cmd_cfg.path,
+                filename = kit.abs_path(ctx.cmd_cfg.cwd, filename),
                 lnum = lnum,
                 text = text,
             })

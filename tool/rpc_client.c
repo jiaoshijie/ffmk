@@ -68,8 +68,15 @@ static void packet_vec_clear() {
 }
 
 static void packet_vec_append(const uint8_t *buf, size_t len) {
-    if (g_pv.len + len > g_pv.cap) {
+    size_t required = g_pv.len + len;
+    if (required > g_pv.cap) {
+        assert(g_pv.cap <= SIZE_MAX / 2);
         size_t new_cap = g_pv.cap == 0 ? 1024 : g_pv.cap * 2;
+        while (new_cap < required) {
+            assert(new_cap <= SIZE_MAX / 2);
+            new_cap *= 2;
+        }
+
         uint8_t *new_buf = (uint8_t *)realloc(g_pv.buf, new_cap);
         if (new_buf) {
             g_pv.buf = new_buf;

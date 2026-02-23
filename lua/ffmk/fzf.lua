@@ -73,7 +73,7 @@ end
 
 --- @param ctx FzfCtx
 _M.run = function(ctx)
-    assert(type(ctx.cmd) ~= string, "cmd must be a string")
+    assert(type(ctx.cmd) == "string", "cmd must be a string")
 
     vim.fn.jobstart(fzf_cfg.bin, {
         cwd = vim.fn.expand(ctx.cwd or vim.fn.getcwd()),

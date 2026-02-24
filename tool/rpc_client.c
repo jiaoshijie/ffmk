@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <assert.h>
 
 #define PACKET_RECV_BUF_LEN 2048
 #define SOCKET_TIMEOUT_US 100 * 1000  // 100ms

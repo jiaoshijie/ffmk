@@ -208,7 +208,8 @@ _M.edit = function(loc)
             vim.opt.runtimepath:append(rtp)
         end
         vim.schedule(function()
-            vim.cmd('help ' .. vim.fn.fnameescape(loc.helptag.tag))
+            print(loc.helptag.tag)
+            vim.cmd('help ' .. loc.helptag.tag)
         end)
     end
 end

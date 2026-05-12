@@ -2,6 +2,11 @@ local _M = {}
 local fmt = string.format
 
 --- @param msg string
+_M.echo_info_msg = function(msg)
+    vim.api.nvim_echo({ { fmt("ffmk: %s", msg) } }, true, { err = false })
+end
+
+--- @param msg string
 _M.echo_err_msg = function(msg)
     vim.api.nvim_echo({ { fmt("ffmk: %s", msg) } }, true, { err = true })
 end
@@ -234,15 +239,24 @@ _M.goto_winid = function(prefer_winid)
     vim.cmd("silent keepalt vertical split")
 end
 
+--- @param query string
 --- @param cmd string
 --- @param cwd string?
 --- @param winid integer
 --- @return boolean
-_M.gnu_global_definition = function(cmd, cwd, winid)
+_M.gnu_global_definition = function(query, cmd, cwd, winid)
     local res = vim.fn.systemlist(vim.split(cmd, '|')[1])
-    if vim.v.shell_error ~= 0 or #res ~= 1 then
+
+    if vim.v.shell_error ~= 0 then
+        _M.echo_err_msg(fmt("`%s` exited with `%d`", cmd, vim.v.shell_error))
+        return true
+    elseif #res > 1 then
         return false
+    elseif #res == 0 then
+        _M.echo_info_msg(fmt("No definition found for `%s`", query))
+        return true
     end
+
     local path, lnum, _ = res[1]:match("(.+)\t(%d+)\t(.+)")
 
     if not path or not lnum then return false end

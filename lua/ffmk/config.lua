@@ -77,7 +77,7 @@ _M.fzf_cfg = {
     files = {
         opt = {
             ["--no-multi"] = true,
-            ["--scheme"]   = "path",
+            ["--scheme"]   = "default",
             ["--tabstop"]  = "1",
         },
         bind = {

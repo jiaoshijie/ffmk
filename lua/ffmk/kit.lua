@@ -236,7 +236,9 @@ _M.goto_winid = function(prefer_winid)
         return
     end
 
-    vim.cmd("silent keepalt vertical split")
+    -- FIXME: May inherit weird window options from `winfixbuf window`.
+    -- But don't know what should do. Just do it.
+    vim.cmd("silent keepalt vertical new")
 end
 
 --- @param query string

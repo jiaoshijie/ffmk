@@ -122,26 +122,28 @@ end
 --- @param winid integer
 --- @param warn_win boolean enabled cursorline or not
 local set_win_opts = function(winid, warn_win)
+    local opts = { win = winid, scope = "local" }
     if not warn_win then
-        vim.api.nvim_set_option_value('cursorline', true, { win = winid })
-        vim.api.nvim_set_option_value('cursorlineopt', "both", { win = winid })
-        vim.api.nvim_set_option_value('number', true, { win = winid })
+        vim.api.nvim_set_option_value('cursorline', true, opts)
+        vim.api.nvim_set_option_value('cursorlineopt', "both", opts)
+        vim.api.nvim_set_option_value('number', true, opts)
     end
 
-    vim.api.nvim_set_option_value('relativenumber', false, { win = winid })
-    vim.api.nvim_set_option_value('wrap', false, { win = winid })
-    vim.api.nvim_set_option_value('spell', false, { win = winid })
-    vim.api.nvim_set_option_value('signcolumn', 'no', { win = winid })
-    vim.api.nvim_set_option_value('colorcolumn', '0', { win = winid })
-    vim.api.nvim_set_option_value('foldenable', false, { win = winid })
-    vim.api.nvim_set_option_value('list', false, { win = winid })
-    vim.api.nvim_set_option_value('scrolloff', 0, { win = winid })
-    vim.api.nvim_set_option_value('winbar', "", { win = winid })
+    vim.api.nvim_set_option_value('relativenumber', false, opts)
+    vim.api.nvim_set_option_value('wrap', false, opts)
+    vim.api.nvim_set_option_value('spell', false, opts)
+    vim.api.nvim_set_option_value('signcolumn', 'no', opts)
+    vim.api.nvim_set_option_value('colorcolumn', '0', opts)
+    vim.api.nvim_set_option_value('foldenable', false, opts)
+    vim.api.nvim_set_option_value('list', false, opts)
+    vim.api.nvim_set_option_value('scrolloff', 0, opts)
+    vim.api.nvim_set_option_value('winbar', "", opts)
 end
 
 --- @param ctx table runtime_ctx
 _M.render = function(ctx)
     local main, preview = gen_win_layout(ctx.ui_cfg)
+    local opts = { scope = "local" }
 
     if not ctx.winid or not vim.api.nvim_win_is_valid(ctx.winid) then
         assert(ctx.bufnr ~= nil, "ctx.bufnr must be created before calling this function")
@@ -157,7 +159,8 @@ _M.render = function(ctx)
             title = gen_title(ctx.name, ctx.cmd_cfg),
             title_pos = "center",
         })
-        vim.api.nvim_set_option_value('winblend', 0, { win = ctx.winid })
+        opts.win = ctx.winid
+        vim.api.nvim_set_option_value('winblend', 0, opts)
     else
         -- resize the window
         vim.api.nvim_win_set_config(ctx.winid, main)
@@ -178,7 +181,8 @@ _M.render = function(ctx)
                 noautocmd = true,
                 border = preview_border,
             })
-            vim.api.nvim_set_option_value('winblend', 0, { win = ctx.preview_winid })
+            opts.win = ctx.preview_winid
+            vim.api.nvim_set_option_value('winblend', 0, opts)
         else
             vim.api.nvim_win_set_config(ctx.preview_winid, preview)
         end
@@ -249,27 +253,27 @@ local update_preview = function(ctx, bufnr, loc, loaded_buf, syntax, filename)
             set_win_opts(ctx.preview_winid, false)
             kit.set_win_cursor_pos(ctx.preview_winid, loc)
             kit.highlight_cursor(ns, bufnr, loc)
-
+            local opts = { buf = bufnr, scope = "local" }
 
             if loc.ft then
-                vim.api.nvim_set_option_value('filetype', loc.ft, { buf = bufnr })
+                vim.api.nvim_set_option_value('filetype', loc.ft, opts)
                 return
             end
 
             local ft = nil
             if syntax then ft = vim.filetype.match({ buf = bufnr, filename = filename }) end
             if ft then
-                -- TODO: Do not know if there is a better to do the highlighting with no delay
+                -- FIXME: Do not know if there is a better to do the highlighting with no delay
                 -- 1. If the filetype is set directly, there is sometimes a noticeable delay when scrolling through files. It may be acceptable, but I don't like it.
                 -- 2. Using defer_fn reduces the delay a lot. However, another issue arises: when first opening Neovim and using ffmk with preview,
                 --    sometimes the FZF terminal window rendering is weird. Since this only happens once per neovim session and doesn’t always occur, I prefer this one.
                 --    When this happens, pressing <ESC> to return to Normal mode, then pressing A to go back to Insert mode will fix this issue.
                 vim.defer_fn(function()
                     if vim.api.nvim_buf_is_loaded(bufnr) then
-                        pcall(vim.api.nvim_set_option_value, 'filetype', ft, { buf = bufnr })
+                        pcall(vim.api.nvim_set_option_value, 'filetype', ft, opts)
                     end
                 end, 20)
-                -- vim.api.nvim_set_option_value('filetype', ft, { buf = bufnr })
+                -- vim.api.nvim_set_option_value('filetype', ft, opts)
             end
         end))
     else

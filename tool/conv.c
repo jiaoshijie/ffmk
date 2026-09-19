@@ -28,10 +28,15 @@ enum FUNC_CODE {
 
 static const char *program_name = "conv";
 
+static const char *grey = "\033[3;90m";
+static const char *red = "\033[9;91m";
+static const char *purple = "\033[3;95m";
+static const char *yellow = "\033[3;93m";
+
 static void files(char **argv) {
     (void) argv;
-    const char *ansi_dir = "\033[3;38:5:248m";  // dir color
-    const char *ansi_rm = "\033[9;38:5:196m";  // removed
+    const char *ansi_dir = grey;  // dir color
+    const char *ansi_rm = red;  // removed
 
     char *name = NULL;
     char path[MAX_PATH_LEN] = { 0 };
@@ -96,8 +101,8 @@ static void grep(char **argv) {
 }
 
 static void helptags(char **argv) {
-    const char *ansi_tag = "\033[3;38:5:182m";
-    const char *ansi_fn = "\033[3;38:5:248m";
+    const char *ansi_tag = purple;
+    const char *ansi_fn = grey;
     const char *sep = "\034";  // \034 \035 \036 \037
 
     char *tag_path = NULL, tag_dir[MAX_PATH_LEN] = { 0 };
@@ -166,7 +171,7 @@ static void helptags(char **argv) {
 
 static void ctags(char **argv) {
     (void) argv;
-    const char *ansi_ty = "\033[3;38:5:248m";  // type color
+    const char *ansi_ty = grey;  // type color
     const char *sep = "\034";  // \034 \035 \036 \037
 
     char line[8192] = { 0 }; // if a line is long then this, don't care
@@ -215,8 +220,8 @@ static void ctags(char **argv) {
 
 static void gnu_global(char **argv) {
     (void) argv;
-    const char *ansi_path = "\033[3;38:5:13m";
-    const char *ansi_lnum = "\033[3;38:5:11m";
+    const char *ansi_path = purple;
+    const char *ansi_lnum = yellow;
     const char *sep = "\034";  // \034 \035 \036 \037
 
     char line[8192] = { 0 }; // if a line is long then this, don't care

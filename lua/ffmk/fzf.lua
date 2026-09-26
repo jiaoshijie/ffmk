@@ -1,5 +1,6 @@
 local _M = {}
 local fzf_cfg = require('ffmk.config').fzf_cfg
+local kit = require("ffmk.kit")
 local fmt = string.format
 
 local script_dir = debug.getinfo(1, "S").source:gsub("^@", ""):match("(.*/)")
@@ -77,7 +78,7 @@ _M.run = function(ctx)
     assert(type(ctx.cmd) == "string", "cmd must be a string")
 
     vim.fn.jobstart(fzf_cfg.bin, {
-        cwd = vim.fn.expand(ctx.cwd or vim.fn.getcwd()),
+        cwd = kit.normalize_path(ctx.cwd or vim.fn.getcwd()),
         term = true,
         clear_env = true,
         env = {

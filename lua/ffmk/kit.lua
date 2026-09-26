@@ -131,18 +131,21 @@ _M.scroll = function(winid, up)
     end)
 end
 
+_M.normalize_path = function(path)
+    return vim.fs.normalize(path, { expand_env = true, win = false })
+end
 
 --- @param cwd string?
 --- @param path string?
 --- @return string?
 _M.abs_path = function(cwd, path)
     if not path then return nil end
+
     if string.sub(path, 1, 1) ~= '/' then
-        path = string.sub(path, 1, 2) == './' and string.sub(path, 3) or path
-        path = vim.fn.expand(cwd or vim.fn.getcwd()) .. '/' .. path
+        path = fmt("%s/%s", cwd or vim.fn.getcwd(), path)
     end
 
-    return path
+    return _M.normalize_path(path)
 end
 
 --- @param winid integer
@@ -236,8 +239,6 @@ _M.goto_winid = function(prefer_winid)
         return
     end
 
-    -- FIXME: May inherit weird window options from `winfixbuf window`.
-    -- But don't know what should do. Just do it.
     vim.cmd("silent keepalt vertical new")
 end
 
